@@ -222,13 +222,10 @@ function buildDashboard(data) {
         <div class="bottom-label">Most Used Image</div>
         <div class="bottom-value">${topImage}</div>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;border-top:1px solid #2d3148;padding-top:8px;">
-        <div><div class="bottom-label">Avg Session Time (7D)</div><div class="bottom-value">${avgTime}</div></div>
-        <div><div class="bottom-label">Avg Client Count (7D)</div><div class="bottom-value">${avgClients}</div></div>
-      </div>
-      <div style="position:absolute;bottom:14px;right:18px;text-align:right;">
-        <div class="bottom-label">Last 365 Days</div>
-        <div style="color:#f472b6;font-size:22px;font-weight:700;">${total365}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:8px;border-top:1px solid #2d3148;padding-top:8px;">
+        <div><div class="bottom-label">Avg Session (7D)</div><div class="bottom-value">${avgTime}</div></div>
+        <div><div class="bottom-label">Avg Clients (7D)</div><div class="bottom-value">${avgClients}</div></div>
+        <div style="text-align:right;"><div class="bottom-label">Last 365 Days</div><div style="color:#f472b6;font-size:20px;font-weight:700;">${total365}</div></div>
       </div>
     `;
     labGrid.appendChild(card);
