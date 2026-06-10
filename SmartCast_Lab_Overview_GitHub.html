@@ -286,7 +286,7 @@ function buildDashboard(data) {
 
 async function loadData() {
   try {
-    const rawUrl = `https://technicalservices1.github.io/SMARTCAST-LABS/SmartCast%20Imaging%20Log.csv`;
+    const rawUrl = `https://raw.githubusercontent.com/technicalservices1/SMARTCAST-LABS/main/SmartCast%20Imaging%20Log.csv`;
     const res = await fetch(rawUrl);
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const text = await res.text();
