@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SmartCast Imaging — Lab Overview</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #07090f; display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 20px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+  .monitor-frame { width: 100%; max-width: 1880px; aspect-ratio: 16/9; background: #0f1117; border-radius: 12px; display: flex; flex-direction: column; padding: 24px; overflow: hidden; }
+  .dash-header { display: flex; align-items: center; margin-bottom: 18px; }
+  .dash-title { font-size: 26px; font-weight: 600; color: #ffffff; letter-spacing: 0.5px; }
+  .lab-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; flex: 1; min-height: 0; }
+  .lab-card { background: #1a1d27; border: 1px solid #2d3148; border-radius: 10px; padding: 10px 18px; display: flex; flex-direction: column; position: relative; }
+  .lab-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .lab-name { font-size: 18px; font-weight: 600; color: #e2e8f0; }
+  .lab-tag { font-size: 12px; color: #e2e8f0; text-transform: uppercase; letter-spacing: 0.6px; }
+  .metric-row { display: flex; justify-content: space-between; margin-bottom: 8px; }
+  .metric-block { flex: 1; }
+  .metric-block.mid { text-align: center; }
+  .metric-block.right { text-align: right; }
+  .metric-label { font-size: 12px; color: #e2e8f0; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 3px; }
+  .metric-value { font-size: 34px; font-weight: 600; }
+  .metric-value.today { color: #34d399; }
+  .metric-value.week { color: #60a5fa; }
+  .metric-value.month { color: #a78bfa; }
+  .metric-value.year { color: #f472b6; }
+  .divider { border: none; border-top: 1px solid #2d3148; margin: 8px 0; }
+  .bottom-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .bottom-label { font-size: 13px; color: #e2e8f0; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 3px; }
+  .bottom-value { font-size: 15px; color: #f59e0b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 500; }
+  .server-row { margin-top: 8px; border-top: 1px solid #2d3148; padding-top: 8px; }
+  .summary-bar { background: #1a1d27; border: 1px solid #2d3148; border-radius: 10px; padding: 16px 24px; display: flex; align-items: center; height: 90px; }
+  .summary-bar + .summary-bar { margin-top: 10px; }
+  .summary-divider { width: 1px; background: #2d3148; height: 50px; flex-shrink: 0; }
+  .summary-block { text-align: center; flex: 1; padding: 0 12px; }
+  .bar-label { flex: 0 0 160px; width: 160px; padding-right: 20px; margin-right: 4px; border-right: 1px solid #2d3148; }
+  .bar-label-text { font-size: 13px; font-weight: 600; color: #e2e8f0; text-transform: uppercase; letter-spacing: 1px; white-space: nowrap; }
+  .summary-label { font-size: 12px; color: #e2e8f0; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 6px; }
+  .summary-value { font-size: 32px; font-weight: 600; color: #f59e0b; }
+  .summary-value.text { font-size: 18px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+  .error { color: #ef4444; font-size: 13px; text-align: center; padding: 20px; }
+</style>
+</head>
+<body>
+<div class="monitor-frame">
+  <div class="dash-header" style="justify-content:space-between;">
+    <div class="dash-title">SmartCast Imaging — Lab Overview</div>
+    <div style="text-align:right;">
+      <div style="font-size:11px;color:#e2e8f0;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:3px;">Local Date & Time</div>
+      <div id="clockDisplay" style="font-size:18px;font-weight:600;color:#ffffff;"></div>
+    </div>
+  </div>
+  <div class="lab-grid" id="labGrid">
+    <div style="color:#6b7280;font-size:14px;padding:20px;">Loading data...</div>
+  </div>
+  <div style="margin-top:14px;">
+    <div class="summary-bar" id="summaryBar1"></div>
+    <div class="summary-bar" id="summaryBar2"></div>
+  </div>
+</div>
+
+<script>
+const GITHUB_OWNER = 'technicalservices1';
+const GITHUB_REPO = 'SMARTCAST-LABS';
+const GITHUB_FILE = 'SmartCast Imaging Log.csv';
+const GITHUB_TOKEN = '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';
+const LABS = ['LA', 'LV', 'CH', 'DAL', 'ENG', 'HAU', 'ATL', 'ORL'];
+const EXCLUDED = ['TEST', 'DC'];
+
+function parseCSV(text) {
+  const lines = text.trim().split('\n');
+  const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+  return lines.slice(1).filter(l => l.trim()).map(line => {
+    const vals = line.split(',').map(v => v.trim().replace(/"/g, ''));
+    const obj = {};
+    headers.forEach((h, i) => obj[h] = vals[i] || '');
+    return obj;
+  });
+}
+
+function getLocation(serverName) {
+  return (serverName || '').split('-')[0];
+}
+
+function parseRowDate(row) {
+  const dateStr = row['Date'] || '';
+  const timeStr = row['StartTime'] || '';
+  if (!dateStr) return null;
+  const d = new Date(dateStr + ' ' + timeStr);
+  return isNaN(d) ? null : d;
+}
+
+function isToday(row) {
+  const d = parseRowDate(row);
+  if (!d) return false;
+  const now = new Date();
+  return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && d.getDate() === now.getDate();
+}
+
+function isRecent(row, days) {
+  const d = parseRowDate(row);
+  if (!d) return false;
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - days);
+  return d >= cutoff;
+}
+
+function topValue(rows, field, weightField) {
+  const counts = {};
+  rows.forEach(r => {
+    const key = r[field];
+    if (!key) return;
+    counts[key] = (counts[key] || 0) + (parseInt(r[weightField]) || 1);
+  });
+  return Object.entries(counts).sort((a,b) => b[1]-a[1])[0]?.[0] || '--';
+}
+
+function topServer(rows) {
+  const counts = {};
+  rows.forEach(r => {
+    const key = r['ServerName'];
+    if (!key) return;
+    counts[key] = (counts[key] || 0) + 1;
+  });
+  return Object.entries(counts).sort((a,b) => b[1]-a[1])[0]?.[0] || '--';
+}
+
+function parseTime(t) {
+  if (!t) return null;
+  const match = t.match(/(\d+):(\d+)(?::(\d+))?\s*(AM|PM)?/i);
+  if (!match) return null;
+  let h = parseInt(match[1]), m = parseInt(match[2]), s = parseInt(match[3] || 0);
+  const ampm = match[4];
+  if (ampm) {
+    if (ampm.toUpperCase() === 'PM' && h !== 12) h += 12;
+    if (ampm.toUpperCase() === 'AM' && h === 12) h = 0;
+  }
+  return h * 3600 + m * 60 + s;
+}
+
+function avgSessionTime(rows) {
+  const durations = [];
+  rows.forEach(r => {
+    const dateStr = r['Date'] || '';
+    if (!dateStr) return;
+    const start = new Date(dateStr + ' ' + (r['StartTime'] || ''));
+    const finish = new Date(dateStr + ' ' + (r['FinishTime'] || ''));
+    if (!isNaN(start) && !isNaN(finish) && finish > start) {
+      durations.push((finish - start) / 60000);
+    }
+  });
+  if (!durations.length) return '--';
+  return Math.round(durations.reduce((a, b) => a + b, 0) / durations.length) + ' min';
+}
+
+function avgClientCount(rows) {
+  if (!rows.length) return '--';
+  return Math.round(rows.reduce((s, r) => s + (parseInt(r['ClientCount']) || 0), 0) / rows.length).toString();
+}
+
+function buildDashboard(data) {
+  const filtered = data.filter(r => !EXCLUDED.includes(getLocation(r['ServerName'] || '')));
+  const labGrid = document.getElementById('labGrid');
+  labGrid.innerHTML = '';
+
+  let combined7 = 0, combined30 = 0, combined365 = 0;
+  const labTotals7 = {}, labTotals30 = {}, labTotals365 = {};
+
+  LABS.forEach(lab => {
+    const labRows = filtered.filter(r => getLocation(r['ServerName'] || '') === lab);
+    const rowsToday = labRows.filter(r => isToday(r));
+    const rows7 = labRows.filter(r => isRecent(r, 7));
+    const rows30 = labRows.filter(r => isRecent(r, 30));
+    const rows365 = labRows.filter(r => isRecent(r, 365));
+
+    const totalToday = rowsToday.reduce((s, r) => s + (parseInt(r['ClientCount']) || 0), 0);
+    const total7 = rows7.reduce((s, r) => s + (parseInt(r['ClientCount']) || 0), 0);
+    const total30 = rows30.reduce((s, r) => s + (parseInt(r['ClientCount']) || 0), 0);
+    const total365 = rows365.reduce((s, r) => s + (parseInt(r['ClientCount']) || 0), 0);
+
+    combined7 += total7;
+    combined30 += total30;
+    combined365 += total365;
+    labTotals7[lab] = total7;
+    labTotals30[lab] = total30;
+    labTotals365[lab] = total365;
+
+    const topModel = topValue(labRows, 'Model', 'ClientCount');
+    const topImage = topValue(labRows, 'ImageName', 'ClientCount');
+    const topSrv = topServer(labRows);
+    const avgTime = avgSessionTime(rows7);
+    const avgClients = avgClientCount(rows7);
+
+    const card = document.createElement('div');
+    card.className = 'lab-card';
+    card.innerHTML = `
+      <div class="lab-header">
+        <div class="lab-name">${lab}</div>
+        <div class="lab-tag">Machines Imaged</div>
+      </div>
+      <div class="metric-row">
+        <div class="metric-block">
+          <div class="metric-label">Today</div>
+          <div class="metric-value today">${totalToday}</div>
+        </div>
+        <div class="metric-block mid">
+          <div class="metric-label">Last 7 Days</div>
+          <div class="metric-value week">${total7}</div>
+        </div>
+        <div class="metric-block right">
+          <div class="metric-label">Last 30 Days</div>
+          <div class="metric-value month">${total30}</div>
+        </div>
+      </div>
+      <hr class="divider">
+      <div class="bottom-row">
+        <div><div class="bottom-label">Most Used Model</div><div class="bottom-value">${topModel}</div></div>
+        <div><div class="bottom-label">Most Used Server</div><div class="bottom-value" style="color:#60a5fa;">${topSrv}</div></div>
+      </div>
+      <div style="margin-top:8px;border-top:1px solid #2d3148;padding-top:8px;">
+        <div class="bottom-label">Most Used Image</div>
+        <div class="bottom-value">${topImage}</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;border-top:1px solid #2d3148;padding-top:8px;">
+        <div><div class="bottom-label">Avg Session Time (7D)</div><div class="bottom-value">${avgTime}</div></div>
+        <div><div class="bottom-label">Avg Client Count (7D)</div><div class="bottom-value">${avgClients}</div></div>
+      </div>
+      <div style="position:absolute;bottom:14px;right:18px;text-align:right;">
+        <div class="bottom-label">Last 365 Days</div>
+        <div style="color:#f472b6;font-size:22px;font-weight:700;">${total365}</div>
+      </div>
+    `;
+    labGrid.appendChild(card);
+  });
+
+  const topLab7 = Object.entries(labTotals7).sort((a,b) => b[1]-a[1])[0];
+  const topLab30 = Object.entries(labTotals30).sort((a,b) => b[1]-a[1])[0];
+  const topLab365 = Object.entries(labTotals365).sort((a,b) => b[1]-a[1])[0];
+  const topModel = topValue(filtered, 'Model', 'ClientCount');
+  const topSrvAll = topServer(filtered);
+
+  document.getElementById('summaryBar1').innerHTML = `
+    <div class="bar-label"><div class="bar-label-text">All Labs Imaged</div></div>
+    <div class="summary-block">
+      <div class="summary-label">Last 7 Days</div>
+      <div class="summary-value">${combined7}</div>
+    </div>
+    <div class="summary-divider"></div>
+    <div class="summary-block">
+      <div class="summary-label">Last 30 Days</div>
+      <div class="summary-value">${combined30}</div>
+    </div>
+    <div class="summary-divider"></div>
+    <div class="summary-block">
+      <div class="summary-label">Last 365 Days</div>
+      <div class="summary-value">${combined365}</div>
+    </div>
+    <div class="summary-divider"></div>
+    <div class="summary-block">
+      <div class="summary-label">Most Used Model</div>
+      <div class="summary-value text">${topModel}</div>
+    </div>
+  `;
+
+  document.getElementById('summaryBar2').innerHTML = `
+    <div class="bar-label"><div class="bar-label-text">Lab Leaders</div></div>
+    <div class="summary-block">
+      <div style="font-size:36px;font-weight:700;color:#f59e0b;">${topLab7 && topLab7[1] > 0 ? topLab7[0] : '--'}</div>
+    </div>
+    <div class="summary-divider"></div>
+    <div class="summary-block">
+      <div style="font-size:36px;font-weight:700;color:#f59e0b;">${topLab30 && topLab30[1] > 0 ? topLab30[0] : '--'}</div>
+    </div>
+    <div class="summary-divider"></div>
+    <div class="summary-block">
+      <div style="font-size:36px;font-weight:700;color:#f59e0b;">${topLab365 && topLab365[1] > 0 ? topLab365[0] : '--'}</div>
+    </div>
+    <div class="summary-divider"></div>
+    <div class="summary-block">
+      <div class="summary-label">Most Used Server</div>
+      <div class="summary-value text" style="color:#60a5fa;">${topSrvAll}</div>
+    </div>
+  `;
+}
+
+async function loadData() {
+  try {
+    const encodedFile = encodeURIComponent(GITHUB_FILE);
+    const apiUrl = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${encodedFile}`;
+    const res = await fetch(apiUrl, {
+      headers: {
+        'Authorization': `token ${GITHUB_TOKEN}`,
+        'Accept': 'application/vnd.github.v3.raw'
+      }
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const text = await res.text();
+    buildDashboard(parseCSV(text));
+  } catch(e) {
+    document.getElementById('labGrid').innerHTML = `<div class="error">Error loading data: ${e.message}<br>Check your GitHub token and repo settings.</div>`;
+  }
+}
+
+loadData();
+setInterval(loadData, 300000);
+
+function updateClock() {
+  const now = new Date();
+  const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const day = days[now.getDay()];
+  const month = months[now.getMonth()];
+  const date = now.getDate();
+  const year = now.getFullYear();
+  let hours = now.getHours();
+  const minutes = now.getMinutes().toString().padStart(2, '0');
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  hours = hours % 12 || 12;
+  const seconds = now.getSeconds().toString().padStart(2, '0');
+  document.getElementById('clockDisplay').textContent = `${day}, ${month} ${date}, ${year} · ${hours}:${minutes}:${seconds} ${ampm}`;
+}
+updateClock();
+setInterval(updateClock, 1000);
+</script>
+</body>
+</html>
