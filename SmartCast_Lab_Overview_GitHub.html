@@ -9,43 +9,50 @@
   body { background: #07090f; min-height: 100vh; padding: 16px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
   .monitor-frame { width: 117.6%; transform: scale(0.85); transform-origin: top left; background: #0f1117; border-radius: 12px; display: flex; flex-direction: column; padding: 20px; }
   .dash-header { display: flex; align-items: center; margin-bottom: 18px; }
-  .dash-title { font-size: 26px; font-weight: 600; color: #ffffff; letter-spacing: 0.5px; }
+  .dash-title { font-size: 24px; font-weight: 600; color: #ffffff; letter-spacing: 0.5px; }
+  .dash-subtitle { font-size: 11px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.8px; margin-top: 3px; }
+  .dash-subtitle span { color: #f59e0b; font-weight: 500; }
   .lab-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; flex: 1; min-height: 0; }
-  .lab-card { background: #1a1d27; border: 1px solid #2d3148; border-radius: 10px; padding: 10px 18px; display: flex; flex-direction: column; position: relative; }
-  .lab-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-  .lab-name { font-size: 18px; font-weight: 600; color: #e2e8f0; }
-  .lab-tag { font-size: 12px; color: #e2e8f0; text-transform: uppercase; letter-spacing: 0.6px; }
+  .lab-card { background: #1a1d27; border: 1px solid #2d3148; border-radius: 10px; padding: 10px 18px; display: flex; flex-direction: column; }
+  .lab-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .lab-name { font-size: 17px; font-weight: 600; color: #e2e8f0; }
+  .lab-tag { font-size: 11px; color: #e2e8f0; text-transform: uppercase; letter-spacing: 0.6px; }
   .metric-row { display: flex; justify-content: space-between; margin-bottom: 8px; }
   .metric-block { flex: 1; }
   .metric-block.mid { text-align: center; }
   .metric-block.right { text-align: right; }
-  .metric-label { font-size: 12px; color: #e2e8f0; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 3px; }
-  .metric-value { font-size: 34px; font-weight: 600; }
+  .metric-label { font-size: 11px; color: #e2e8f0; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 2px; }
+  .metric-value { font-size: 28px; font-weight: 600; }
   .metric-value.today { color: #34d399; }
   .metric-value.week { color: #60a5fa; }
   .metric-value.month { color: #a78bfa; }
   .metric-value.year { color: #f472b6; }
-  .divider { border: none; border-top: 1px solid #2d3148; margin: 8px 0; }
+  .divider { border: none; border-top: 1px solid #2d3148; margin: 6px 0; }
   .bottom-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-  .bottom-label { font-size: 13px; color: #e2e8f0; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 3px; }
-  .bottom-value { font-size: 15px; color: #f59e0b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 500; }
+  .bottom-label { font-size: 11px; color: #e2e8f0; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 2px; }
+  .bottom-value { font-size: 13px; color: #f59e0b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 500; }
+  .bottom-value.server { color: #60a5fa; }
+  .bottom-value.image { font-size: 11px; }
   .server-row { margin-top: 8px; border-top: 1px solid #2d3148; padding-top: 8px; }
-  .summary-bar { background: #1a1d27; border: 1px solid #2d3148; border-radius: 10px; padding: 16px 24px; display: flex; align-items: center; height: 90px; }
-  .summary-bar + .summary-bar { margin-top: 10px; }
-  .summary-divider { width: 1px; background: #2d3148; height: 50px; flex-shrink: 0; }
+  .summary-bar { background: #1a1d27; border: 1px solid #2d3148; border-radius: 10px; padding: 12px 24px; display: flex; align-items: center; height: 75px; }
+  .summary-bar + .summary-bar { margin-top: 8px; }
+  .summary-divider { width: 1px; background: #2d3148; height: 40px; flex-shrink: 0; }
   .summary-block { text-align: center; flex: 1; padding: 0 12px; }
-  .bar-label { flex: 0 0 160px; width: 160px; padding-right: 20px; margin-right: 4px; border-right: 1px solid #2d3148; }
-  .bar-label-text { font-size: 13px; font-weight: 600; color: #e2e8f0; text-transform: uppercase; letter-spacing: 1px; white-space: nowrap; }
-  .summary-label { font-size: 12px; color: #e2e8f0; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 6px; }
-  .summary-value { font-size: 32px; font-weight: 600; color: #f59e0b; }
-  .summary-value.text { font-size: 18px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+  .bar-label { flex: 0 0 140px; width: 140px; padding-right: 16px; margin-right: 4px; border-right: 1px solid #2d3148; }
+  .bar-label-text { font-size: 12px; font-weight: 600; color: #e2e8f0; text-transform: uppercase; letter-spacing: 1px; white-space: nowrap; }
+  .summary-label { font-size: 11px; color: #e2e8f0; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 4px; }
+  .summary-value { font-size: 28px; font-weight: 600; color: #f59e0b; }
+  .summary-value.text { font-size: 16px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
   .error { color: #ef4444; font-size: 13px; text-align: center; padding: 20px; }
 </style>
 </head>
 <body>
 <div class="monitor-frame">
   <div class="dash-header" style="justify-content:space-between;">
-    <div class="dash-title">SmartCast Imaging — Lab Overview</div>
+    <div>
+      <div class="dash-title">SmartCast Imaging — Lab Overview</div>
+      <div class="dash-subtitle">Last Entry: <span id="lastEntryDisplay">--</span></div>
+    </div>
     <div style="text-align:right;">
       <div style="font-size:11px;color:#e2e8f0;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:3px;">Local Date & Time</div>
       <div id="clockDisplay" style="font-size:18px;font-weight:600;color:#ffffff;"></div>
@@ -161,6 +168,21 @@ function avgClientCount(rows) {
 
 function buildDashboard(data) {
   const filtered = data.filter(r => !EXCLUDED.includes(getLocation(r['ServerName'] || '')));
+
+  // Last entry timestamp
+  const lastRow = data[data.length - 1];
+  if (lastRow) {
+    const d = parseRowDate(lastRow);
+    if (d) {
+      const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+      const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+      let h = d.getHours(), m = d.getMinutes().toString().padStart(2,'0');
+      const ampm = h >= 12 ? 'PM' : 'AM';
+      h = h % 12 || 12;
+      const label = `${days[d.getDay()]}, ${months[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()} · ${h}:${m} ${ampm}`;
+      document.getElementById('lastEntryDisplay').textContent = label;
+    }
+  }
   const labGrid = document.getElementById('labGrid');
   labGrid.innerHTML = '';
 
@@ -216,16 +238,16 @@ function buildDashboard(data) {
       <hr class="divider">
       <div class="bottom-row">
         <div><div class="bottom-label">Most Used Model</div><div class="bottom-value">${topModel}</div></div>
-        <div><div class="bottom-label">Most Used Server</div><div class="bottom-value" style="color:#60a5fa;">${topSrv}</div></div>
+        <div><div class="bottom-label">Most Used Server</div><div class="bottom-value server">${topSrv}</div></div>
       </div>
-      <div style="margin-top:8px;border-top:1px solid #2d3148;padding-top:8px;">
+      <div style="margin-top:6px;border-top:1px solid #2d3148;padding-top:6px;">
         <div class="bottom-label">Most Used Image</div>
-        <div class="bottom-value">${topImage}</div>
+        <div class="bottom-value image">${topImage}</div>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:8px;border-top:1px solid #2d3148;padding-top:8px;">
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:6px;border-top:1px solid #2d3148;padding-top:6px;">
         <div><div class="bottom-label">Avg Session (7D)</div><div class="bottom-value">${avgTime}</div></div>
         <div><div class="bottom-label">Avg Clients (7D)</div><div class="bottom-value">${avgClients}</div></div>
-        <div style="text-align:right;"><div class="bottom-label">Last 365 Days</div><div style="color:#f472b6;font-size:20px;font-weight:700;">${total365}</div></div>
+        <div style="text-align:right;"><div class="bottom-label">Last 365 Days</div><div style="color:#f472b6;font-size:18px;font-weight:700;">${total365}</div></div>
       </div>
     `;
     labGrid.appendChild(card);
