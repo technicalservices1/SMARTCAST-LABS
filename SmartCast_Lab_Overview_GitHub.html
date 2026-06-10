@@ -287,13 +287,8 @@ function buildDashboard(data) {
 async function loadData() {
   try {
     const encodedFile = encodeURIComponent(GITHUB_FILE);
-    const apiUrl = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${encodedFile}`;
-    const res = await fetch(apiUrl, {
-      headers: {
-        'Authorization': `token ${GITHUB_TOKEN}`,
-        'Accept': 'application/vnd.github.v3.raw'
-      }
-    });
+    const rawUrl = `https://raw.githubusercontent.com/${GITHUB_OWNER}/${GITHUB_REPO}/main/${encodedFile}`;
+    const res = await fetch(rawUrl);
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const text = await res.text();
     buildDashboard(parseCSV(text));
