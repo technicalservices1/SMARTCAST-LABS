@@ -51,7 +51,7 @@
   <div class="dash-header" style="justify-content:space-between;">
     <div>
       <div class="dash-title">SmartCast Imaging — Lab Overview</div>
-      <div class="dash-subtitle">Last Entry: <span id="lastEntryDisplay">--</span></div>
+      <div class="dash-subtitle">Most Recent Entry: <span id="lastEntryDisplay">--</span></div>
     </div>
     <div style="text-align:right;">
       <div style="font-size:11px;color:#e2e8f0;text-transform:uppercase;letter-spacing:0.8px;margin-bottom:3px;">Local Date & Time</div>
@@ -173,13 +173,14 @@ function buildDashboard(data) {
   const lastRow = data[data.length - 1];
   if (lastRow) {
     const d = parseRowDate(lastRow);
+    const lab = getLocation(lastRow['ServerName'] || '') || '--';
     if (d) {
       const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
       const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
       let h = d.getHours(), m = d.getMinutes().toString().padStart(2,'0');
       const ampm = h >= 12 ? 'PM' : 'AM';
       h = h % 12 || 12;
-      const label = `${days[d.getDay()]}, ${months[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()} · ${h}:${m} ${ampm}`;
+      const label = `${days[d.getDay()]}, ${months[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()} · ${h}:${m} ${ampm} — ${lab}`;
       document.getElementById('lastEntryDisplay').textContent = label;
     }
   }
