@@ -90,8 +90,24 @@ function getLocation(serverName) {
   return (serverName || '').split('-')[0];
 }
 
+function normalizeDate(dateStr) {
+  if (!dateStr) return '';
+  // Handle YYYYMMDD (no separators) → YYYY-MM-DD
+  if (/^\d{8}$/.test(dateStr.trim())) {
+    const s = dateStr.trim();
+    return `${s.slice(0,4)}-${s.slice(4,6)}-${s.slice(6,8)}`;
+  }
+  // Handle M/D/YYYY or MM/DD/YYYY → YYYY-MM-DD
+  const slash = dateStr.trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (slash) {
+    return `${slash[3]}-${slash[1].padStart(2,'0')}-${slash[2].padStart(2,'0')}`;
+  }
+  // Already YYYY-MM-DD or similar — return as-is
+  return dateStr.trim();
+}
+
 function parseRowDate(row) {
-  const dateStr = row['Date'] || '';
+  const dateStr = normalizeDate(row['Date'] || '');
   const timeStr = row['StartTime'] || '';
   if (!dateStr) return null;
   const d = new Date(dateStr + ' ' + timeStr);
@@ -169,8 +185,11 @@ function avgClientCount(rows) {
 function buildDashboard(data) {
   const filtered = data.filter(r => !EXCLUDED.includes(getLocation(r['ServerName'] || '')));
 
-  // Last entry timestamp
-  const lastRow = data[data.length - 1];
+  // Last entry timestamp — skip excluded servers and unparseable dates
+  const lastRow = [...data].reverse().find(r => {
+    const loc = getLocation(r['ServerName'] || '');
+    return !EXCLUDED.includes(loc) && parseRowDate(r) !== null;
+  });
   if (lastRow) {
     const d = parseRowDate(lastRow);
     const lab = getLocation(lastRow['ServerName'] || '') || '--';
