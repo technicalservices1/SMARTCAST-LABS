@@ -106,12 +106,33 @@ function normalizeDate(dateStr) {
   return dateStr.trim();
 }
 
-function parseRowDate(row) {
-  const dateStr = normalizeDate(row['Date'] || '');
-  const timeStr = row['StartTime'] || '';
+// Safari-safe date builder. Safari's Date parser rejects strings like
+// '2026-06-18 4:24 PM', so we construct the Date from explicit numeric parts.
+function buildDate(rawDateStr, timeStr) {
+  const dateStr = normalizeDate(rawDateStr || '');
   if (!dateStr) return null;
-  const d = new Date(dateStr + ' ' + timeStr);
+  const dm = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!dm) {
+    const fallback = new Date(dateStr);
+    return isNaN(fallback) ? null : fallback;
+  }
+  const year = parseInt(dm[1]), month = parseInt(dm[2]) - 1, day = parseInt(dm[3]);
+  let h = 0, m = 0, s = 0;
+  const tm = (timeStr || '').match(/(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(AM|PM)?/i);
+  if (tm) {
+    h = parseInt(tm[1]); m = parseInt(tm[2]); s = parseInt(tm[3] || 0);
+    const ampm = tm[4];
+    if (ampm) {
+      if (ampm.toUpperCase() === 'PM' && h !== 12) h += 12;
+      if (ampm.toUpperCase() === 'AM' && h === 12) h = 0;
+    }
+  }
+  const d = new Date(year, month, day, h, m, s);
   return isNaN(d) ? null : d;
+}
+
+function parseRowDate(row) {
+  return buildDate(row['Date'] || '', row['StartTime'] || '');
 }
 
 function isToday(row) {
@@ -167,9 +188,9 @@ function avgSessionTime(rows) {
   rows.forEach(r => {
     const dateStr = r['Date'] || '';
     if (!dateStr) return;
-    const start = new Date(dateStr + ' ' + (r['StartTime'] || ''));
-    const finish = new Date(dateStr + ' ' + (r['FinishTime'] || ''));
-    if (!isNaN(start) && !isNaN(finish) && finish > start) {
+    const start = buildDate(dateStr, r['StartTime'] || '');
+    const finish = buildDate(dateStr, r['FinishTime'] || '');
+    if (start && finish && finish > start) {
       durations.push((finish - start) / 60000);
     }
   });
