@@ -32,7 +32,7 @@
   .bottom-label { font-size: 11px; color: #e2e8f0; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 2px; }
   .bottom-value { font-size: 13px; color: #f59e0b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 500; }
   .bottom-value.server { color: #60a5fa; }
-  .bottom-value.image { font-size: 11px; }
+  .bottom-value.image { font-size: 11px; min-width: 0; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .server-row { margin-top: 8px; border-top: 1px solid #2d3148; padding-top: 8px; }
   .summary-bar { background: #1a1d27; border: 1px solid #2d3148; border-radius: 10px; padding: 12px 24px; display: flex; align-items: center; height: 75px; }
   .summary-bar + .summary-bar { margin-top: 8px; }
@@ -280,7 +280,7 @@ function buildDashboard(data) {
       <hr class="divider">
       <div class="bottom-row">
         <div><div class="bottom-label">Most Used Model</div><div class="bottom-value">${topModel}</div></div>
-        <div><div class="bottom-label">Most Used Server (by Sessions)</div><div class="bottom-value server">${topSrv}</div></div>
+        <div><div class="bottom-label">Top Server (Sessions)</div><div class="bottom-value server">${topSrv}</div></div>
       </div>
       <div style="margin-top:6px;border-top:1px solid #2d3148;padding-top:6px;">
         <div class="bottom-label">Most Used Image</div>
@@ -339,7 +339,7 @@ function buildDashboard(data) {
     </div>
     <div class="summary-divider"></div>
     <div class="summary-block">
-      <div class="summary-label">Most Used Server (by Sessions)</div>
+      <div class="summary-label">Top Server (Sessions)</div>
       <div class="summary-value text" style="color:#60a5fa;">${topSrvAll}</div>
     </div>
   `;
