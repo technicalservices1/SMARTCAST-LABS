@@ -3,7 +3,6 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta http-equiv="refresh" content="300">
 <title>SmartCast Imaging — Lab Overview</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -13,7 +12,7 @@
   .dash-title { font-size: 24px; font-weight: 600; color: #ffffff; letter-spacing: 0.5px; }
   .dash-subtitle { font-size: 11px; color: #60a5fa; text-transform: uppercase; letter-spacing: 0.8px; margin-top: 3px; }
   .dash-subtitle span { color: #f59e0b; font-weight: 500; }
-  .lab-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; flex: 1; min-height: 0; }
+  .lab-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; flex: 1; min-height: 620px; }
   .lab-card { background: #1a1d27; border: 1px solid #2d3148; border-radius: 10px; padding: 14px 18px; display: flex; flex-direction: column; min-height: 360px; }
   .lab-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
   .lab-name { font-size: 17px; font-weight: 600; color: #e2e8f0; }
@@ -45,6 +44,40 @@
   .summary-value { font-size: 28px; font-weight: 600; color: #f59e0b; }
   .summary-value.text { font-size: 16px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
   .error { color: #ef4444; font-size: 13px; text-align: center; padding: 20px; }
+  .lab-local { font-size: 14px; color: #f59e0b; letter-spacing: 0.4px; font-weight: 500; }
+  .lab-local span { color: #f59e0b; }
+  /* Rotation / spotlight mode: the active tile fills the SAME area the 8-tile
+     grid normally occupies. Summary bars stay visible. Header unaffected. */
+  .monitor-frame.spotlight .lab-grid {
+    display: block;  /* single tile takes the whole grid region */
+  }
+  .monitor-frame.spotlight .lab-card { display: none; }
+  .monitor-frame.spotlight .lab-card.spot-active {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    min-height: 0;   /* override the 360px grid min so it fills naturally */
+    padding: 32px 42px;
+    justify-content: space-between;  /* spread content vertically to fill */
+  }
+  /* Scale up the active tile's contents so it reads from across a room. */
+  .monitor-frame.spotlight .lab-card.spot-active .lab-name { font-size: 34px; }
+  .monitor-frame.spotlight .lab-card.spot-active .lab-local { font-size: 24px; }
+  .monitor-frame.spotlight .lab-card.spot-active .lab-tag { font-size: 18px; }
+  .monitor-frame.spotlight .lab-card.spot-active .metric-label { font-size: 18px; margin-bottom: 6px; }
+  .monitor-frame.spotlight .lab-card.spot-active .metric-value { font-size: 64px; }
+  .monitor-frame.spotlight .lab-card.spot-active .bottom-label { font-size: 16px; margin-bottom: 4px; }
+  .monitor-frame.spotlight .lab-card.spot-active .bottom-value { font-size: 26px; }
+  .monitor-frame.spotlight .lab-card.spot-active .bottom-value.image { font-size: 20px; }
+  .monitor-frame.spotlight .lab-card.spot-active .divider { margin: 14px 0; }
+  /* Give the internal stacked blocks a little more breathing room when enlarged */
+  .monitor-frame.spotlight .lab-card.spot-active > div { margin-top: 10px !important; padding-top: 14px !important; }
+  .monitor-frame.spotlight .lab-card.spot-active > .lab-header { margin-top: 0 !important; padding-top: 0 !important; }
+  /* Fade layer applied to grid and cards */
+  .lab-grid.fade-out, .lab-card.fade-out { opacity: 0; }
+  .lab-grid, .lab-card { transition: opacity 0.5s ease-in-out; }
+  .summary-bar-wrap { transition: opacity 0.5s ease-in-out; }
+  .summary-bar-wrap.fade-out { opacity: 0; }
 </style>
 </head>
 <body>
@@ -62,7 +95,7 @@
   <div class="lab-grid" id="labGrid">
     <div style="color:#6b7280;font-size:14px;padding:20px;">Loading data...</div>
   </div>
-  <div style="margin-top:14px;">
+  <div class="summary-bar-wrap" style="margin-top:14px;">
     <div class="summary-bar" id="summaryBar1"></div>
     <div class="summary-bar" id="summaryBar2"></div>
     <div class="summary-bar" id="summaryBar3"></div>
@@ -73,9 +106,38 @@
 const GITHUB_OWNER = 'technicalservices1';
 const GITHUB_REPO = 'SMARTCAST-LABS';
 const GITHUB_FILE = 'SmartCast Imaging Log.csv';
-const GITHUB_TOKEN = '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';
 const LABS = ['LA', 'LV', 'CH', 'DAL', 'ENG', 'HAU', 'ATL', 'ORL'];
-const EXCLUDED = ['TEST', 'DC'];
+
+// Rotation state — declared early so buildDashboard() can safely check it
+// on the very first render (before the rotation engine block runs).
+let rotationTimer = null;
+let rotationIndex = -1; // -1 = overview, 0..n = tile index in LABS
+const EXCLUDED = ['TEST', 'DC', 'PRODUCTIONSC'];
+
+// Per-branch IANA timezones for the local-time clock on each tile.
+// IANA ids handle daylight saving automatically.
+const LAB_TZ = {
+  LA:  'America/Los_Angeles',
+  LV:  'America/Los_Angeles',
+  CH:  'America/Chicago',
+  DAL: 'America/Chicago',
+  ENG: 'America/New_York',
+  HAU: 'America/New_York',
+  ATL: 'America/New_York',
+  ORL: 'America/New_York'
+};
+
+function localTimeFor(lab) {
+  const tz = LAB_TZ[lab];
+  if (!tz) return '';
+  try {
+    return new Intl.DateTimeFormat('en-US', {
+      timeZone: tz, hour: 'numeric', minute: '2-digit', second: '2-digit', hour12: true
+    }).format(new Date());
+  } catch (e) {
+    return '';
+  }
+}
 
 function parseCSV(text) {
   const lines = text.trim().split('\n');
@@ -306,7 +368,10 @@ function buildDashboard(data) {
     card.className = 'lab-card';
     card.innerHTML = `
       <div class="lab-header">
-        <div class="lab-name">${lab}</div>
+        <div style="display:flex;align-items:baseline;gap:10px;min-width:0;">
+          <div class="lab-name">${lab}</div>
+          <div class="lab-local"><span class="lab-local-time" data-lab="${lab}">${localTimeFor(lab)}</span></div>
+        </div>
         <div class="lab-tag">Machines Imaged</div>
       </div>
       <div class="metric-row">
@@ -349,6 +414,14 @@ function buildDashboard(data) {
     `;
     labGrid.appendChild(card);
   });
+
+  // If a rotation is active and the grid was just rebuilt by a background
+  // data refresh, re-apply the current spotlight stage so the view doesn't jump.
+  if (rotationIndex >= 0) {
+    const cards = labGrid.querySelectorAll('.lab-card');
+    cards.forEach(c => c.classList.remove('spot-active'));
+    if (cards[rotationIndex]) cards[rotationIndex].classList.add('spot-active');
+  }
 
   const topLab7 = Object.entries(labTotals7).sort((a,b) => b[1]-a[1])[0];
   const topLab30 = Object.entries(labTotals30).sort((a,b) => b[1]-a[1])[0];
@@ -432,7 +505,7 @@ async function loadData() {
     const text = await res.text();
     buildDashboard(parseCSV(text));
   } catch(e) {
-    document.getElementById('labGrid').innerHTML = `<div class="error">Error loading data: ${e.message}<br>Check your GitHub token and repo settings.</div>`;
+    document.getElementById('labGrid').innerHTML = `<div class="error">Error loading data: ${e.message}<br>Check the repo path and that the CSV is public.</div>`;
   }
 }
 
@@ -456,6 +529,74 @@ function updateClock() {
 }
 updateClock();
 setInterval(updateClock, 1000);
+
+// Keep each tile's local-time clock current (updates the minute display every 15s).
+function updateLabClocks() {
+  document.querySelectorAll('.lab-local-time').forEach(el => {
+    const lab = el.getAttribute('data-lab');
+    const t = localTimeFor(lab);
+    if (t) el.textContent = t;
+  });
+}
+setInterval(updateLabClocks, 1000);
+
+/* ---------- Rotation / spotlight engine ----------
+   Sequence: full overview for OVERVIEW_MS, then each branch tile for TILE_MS,
+   scaled up + centered, fading between slides. Loops forever.
+   Hover anywhere pauses; leaving resumes. Data keeps refreshing in the
+   background (setInterval(loadData,...)) independently of the rotation. */
+const OVERVIEW_MS = 90000;  // 90 seconds
+const TILE_MS = 30000;      // 30 seconds per tile
+const FADE_MS = 500;
+
+function frameEl() { return document.querySelector('.monitor-frame'); }
+function gridEl() { return document.getElementById('labGrid'); }
+
+function showOverview() {
+  const frame = frameEl();
+  frame.classList.remove('spotlight');
+  gridEl().querySelectorAll('.lab-card').forEach(c => c.classList.remove('spot-active'));
+}
+
+function showTile(i) {
+  const frame = frameEl();
+  frame.classList.add('spotlight');
+  const cards = gridEl().querySelectorAll('.lab-card');
+  cards.forEach(c => c.classList.remove('spot-active'));
+  if (cards[i]) cards[i].classList.add('spot-active');
+}
+
+function applyStage() {
+  // Fade only the grid region out, swap the stage, fade back in.
+  // Summary bars stay visible at all times.
+  const grid = gridEl();
+  grid.classList.add('fade-out');
+  setTimeout(() => {
+    if (rotationIndex < 0) showOverview();
+    else showTile(rotationIndex);
+    grid.classList.remove('fade-out');
+  }, FADE_MS);
+}
+
+function scheduleNext() {
+  clearTimeout(rotationTimer);
+  const dwell = (rotationIndex < 0) ? OVERVIEW_MS : TILE_MS;
+  rotationTimer = setTimeout(() => {
+    // advance: overview(-1) -> 0 -> 1 -> ... -> last -> overview(-1)
+    rotationIndex = (rotationIndex + 1 >= LABS.length) ? -1 : rotationIndex + 1;
+    applyStage();
+    scheduleNext();
+  }, dwell);
+}
+
+function startRotation() {
+  rotationIndex = -1;
+  showOverview();
+  scheduleNext();
+}
+
+// Kick off the rotation once the first data render has had a moment to build cards.
+setTimeout(startRotation, 1500);
 </script>
 </body>
 </html>
