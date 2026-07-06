@@ -349,9 +349,9 @@ function buildDashboard(data) {
     labTotals30[lab] = total30;
     labTotals365[lab] = total365;
 
-    const topModel = topValue(labRows, 'Model', 'ClientCount');
-    const topImage = topValue(labRows, 'ImageName', 'ClientCount');
-    const topSrv = topServer(labRows);
+    const topModel = topValue(rows7, 'Model', 'ClientCount');
+    const topImage = topValue(rows7, 'ImageName', 'ClientCount');
+    const topSrv = topServer(rows7);
     const avgTime = avgSessionTime(rows7);
     const avgClients = avgClientCount(rows7);
     const avgSize7 = avgImageSize(rows7);
@@ -390,11 +390,11 @@ function buildDashboard(data) {
       </div>
       <hr class="divider">
       <div class="bottom-row">
-        <div><div class="bottom-label">Most Used Model</div><div class="bottom-value">${topModel}</div></div>
-        <div><div class="bottom-label">Top Server (Sessions)</div><div class="bottom-value server">${topSrv}</div></div>
+        <div><div class="bottom-label">Most Used Model (7D)</div><div class="bottom-value">${topModel}</div></div>
+        <div><div class="bottom-label">Top Server (Sessions) (7D)</div><div class="bottom-value server">${topSrv}</div></div>
       </div>
       <div style="margin-top:6px;border-top:1px solid #2d3148;padding-top:6px;">
-        <div class="bottom-label">Most Used Image</div>
+        <div class="bottom-label">Most Used Image (7D)</div>
         <div class="bottom-value image">${topImage}</div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:6px;border-top:1px solid #2d3148;padding-top:6px;">
