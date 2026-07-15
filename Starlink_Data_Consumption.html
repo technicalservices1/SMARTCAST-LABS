@@ -72,6 +72,12 @@
   .empty{color:var(--mut);font-size:13px;padding:20px;text-align:center}
 
   footer{margin-top:16px;padding-top:12px;border-top:1px solid var(--line);color:var(--mut);font-size:11.5px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+  .reflinks{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:14px 20px;margin-bottom:14px;display:flex;flex-wrap:wrap;gap:12px 28px;align-items:center}
+  .reflinks .rl-label{color:var(--mut);font-size:11px;text-transform:uppercase;letter-spacing:.6px;font-weight:700;margin-right:4px}
+  .reflinks a{display:inline-flex;align-items:center;gap:7px;color:var(--blue);font-size:13px;font-weight:600;text-decoration:none;padding:5px 12px;border-radius:8px;background:rgba(96,165,250,.08);border:1px solid rgba(96,165,250,.18);transition:background .15s}
+  .reflinks a:hover{background:rgba(96,165,250,.16)}
+  .reflinks a svg{width:13px;height:13px;flex-shrink:0}
+
 </style>
 </head>
 <body>
@@ -102,6 +108,14 @@
       </h2>
       <div class="scrollbox" id="topWrap"></div>
     </div>
+  </div>
+
+  <div class="reflinks">
+    <span class="rl-label">Reference</span>
+    <a href="https://smartsourcerentals.sharepoint.com/:x:/s/SolutionsPortal/IQB_7Jjg01JIQZYcb8Ph3kYgAQIUJpV--RyxGavnriQal-g?e=YIZRuR" target="_blank" rel="noopener">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
+      Starlink Order Tracker
+    </a>
   </div>
 
   <footer>
