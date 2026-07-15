@@ -146,7 +146,14 @@ const ECODE_MAP = {"KIT4P000668852J9":"812925","KIT4P00066915CBF":"812921","KIT4
 
 function compute(data){
   // normalize every record to the real plan (50 GB) regardless of what the source file says
-  const recs = data.records.map(r=>({...r, plan:'50 GB', planGB:FLEET_PLAN_GB, ecode:ECODE_MAP[r.kit]||r.ecode||''}));
+  // De-duplicate by kit — the source export occasionally lists the same kit twice (a real
+  // usage row plus a stray 0 GB phantom row). Keep whichever row has the higher usage.
+  const byKit = new Map();
+  data.records.forEach(r=>{
+    const existing = byKit.get(r.kit);
+    if(!existing || r.usage > existing.usage) byKit.set(r.kit, r);
+  });
+  const recs = [...byKit.values()].map(r=>({...r, plan:'50 GB', planGB:FLEET_PLAN_GB, ecode:ECODE_MAP[r.kit]||r.ecode||''}));
   const total = recs.reduce((s,r)=>s+r.usage,0);
   const pool = recs.length * FLEET_PLAN_GB;
   const active = recs.filter(r=>r.usage>0).length;
