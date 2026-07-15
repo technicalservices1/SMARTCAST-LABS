@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="author" content="Anthony Maio">
+<title>Starlink Data Consumption &mdash; SmartSource</title>
+<style>
+  :root{
+    --bg:#0f1117; --panel:#161923; --panel2:#1c2030; --line:#262b3a;
+    --txt:#e6e9f0; --mut:#8b93a7; --amber:#f59e0b; --blue:#60a5fa;
+    --green:#34d399; --red:#f87171; --violet:#a78bfa;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--txt);font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;padding:18px 30px 24px;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1460px;margin:0 auto}
+  header{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--line)}
+  .title h1{font-size:23px;font-weight:700;letter-spacing:.2px}
+  .title h1 .accent{color:var(--amber)}
+  .title .sub{color:var(--mut);font-size:13px;margin-top:4px}
+  .meta{text-align:right;font-size:12.5px;color:var(--mut);line-height:1.7}
+  .meta b{color:var(--blue);font-weight:600}
+  .meta .stamp{color:var(--amber);font-weight:600}
+
+  .hero{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:14px;margin-bottom:12px}
+  @media(max-width:1180px){.hero{grid-template-columns:repeat(3,1fr)}}
+  @media(max-width:640px){.hero{grid-template-columns:repeat(2,1fr)}}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 18px}
+  .metric .label{color:var(--mut);font-size:11.5px;text-transform:uppercase;letter-spacing:.6px;font-weight:600}
+  .metric .val{font-size:27px;font-weight:750;margin-top:6px;letter-spacing:-.5px}
+  .metric .val.amber{color:var(--amber)} .metric .val.blue{color:var(--blue)}
+  .metric .val.red{color:var(--red)} .metric .val.green{color:var(--green)} .metric .val.violet{color:var(--violet)}
+  .metric .val .u{font-size:14px;color:var(--mut);font-weight:600;margin-left:4px}
+  .metric .foot{color:var(--mut);font-size:11.5px;margin-top:6px}
+  .metric .bar{height:5px;border-radius:4px;background:var(--line);margin-top:11px;overflow:hidden}
+  .metric .bar>i{display:block;height:100%}
+
+  .sumbar{display:flex;flex-wrap:wrap;gap:26px;background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:10px 22px;margin-bottom:14px}
+  .sumbar .it{font-size:12.5px;color:var(--mut)}
+  .sumbar .it b{color:var(--txt);font-weight:650;font-size:13.5px}
+  .sumbar .it .k{color:var(--blue)}
+
+  .cols{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:14px}
+  @media(max-width:1080px){.cols{grid-template-columns:1fr}}
+  h2.sec{font-size:13px;text-transform:uppercase;letter-spacing:.7px;color:var(--mut);font-weight:700;margin-bottom:10px;display:flex;align-items:center;gap:8px;justify-content:space-between}
+  h2.sec .lbl{display:flex;align-items:center;gap:8px}
+  h2.sec .cnt{color:var(--mut);font-weight:600;text-transform:none;letter-spacing:0;font-size:11.5px}
+  h2.sec .dot{width:7px;height:7px;border-radius:50%;background:var(--amber)}
+  h2.sec .dot.blue{background:var(--blue)} h2.sec .dot.red{background:var(--red)}
+
+  .scrollbox{max-height:390px;overflow-y:auto;border-radius:10px}
+  .scrollbox::-webkit-scrollbar{width:8px}
+  .scrollbox::-webkit-scrollbar-track{background:transparent}
+  .scrollbox::-webkit-scrollbar-thumb{background:var(--line);border-radius:8px}
+  .scrollbox::-webkit-scrollbar-thumb:hover{background:#333a4d}
+
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  thead th{position:sticky;top:0;background:var(--panel);z-index:2;text-align:left;color:var(--mut);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.5px;padding:8px 10px;border-bottom:1px solid var(--line)}
+  td{padding:9px 10px;border-bottom:1px solid var(--line)}
+  tr:last-child td{border-bottom:none}
+  tr:hover td{background:var(--panel2)}
+  td.kit{font-family:ui-monospace,"SF Mono",Menlo,monospace;font-size:12px;color:var(--mut)}
+  td.ecode{color:var(--mut);font-size:12px;min-width:70px}
+  td.num{text-align:right;font-variant-numeric:tabular-nums;font-weight:650}
+  .pill{display:inline-block;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:650}
+  .pill.p50{background:rgba(96,165,250,.14);color:var(--blue)}
+  .pill.p500{background:rgba(167,139,250,.16);color:var(--violet)}
+  .over{color:var(--red);font-weight:700}
+  .rank{color:var(--mut);font-weight:700;width:26px}
+  .ubar{position:relative;height:20px;background:var(--line);border-radius:5px;overflow:hidden;min-width:90px}
+  .ubar>i{position:absolute;left:0;top:0;bottom:0;border-radius:5px;background:linear-gradient(90deg,var(--amber),#fbbf24)}
+  .empty{color:var(--mut);font-size:13px;padding:20px;text-align:center}
+
+  footer{margin-top:16px;padding-top:12px;border-top:1px solid var(--line);color:var(--mut);font-size:11.5px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="title">
+      <h1>Starlink <span class="accent">Data Consumption</span></h1>
+      <div class="sub">SmartSource fleet usage &mdash; per billing cycle</div>
+    </div>
+    <div class="meta" id="meta"></div>
+  </header>
+
+  <div class="hero" id="hero"></div>
+  <div class="sumbar" id="sumbar"></div>
+
+  <div class="cols">
+    <div class="card">
+      <h2 class="sec">
+        <span class="lbl"><span class="dot red"></span> Overage Watchlist &mdash; kits past plan allotment</span>
+        <span class="cnt" id="overCnt"></span>
+      </h2>
+      <div class="scrollbox" id="overWrap"></div>
+    </div>
+    <div class="card">
+      <h2 class="sec">
+        <span class="lbl"><span class="dot"></span> All Devices</span>
+        <span class="cnt" id="topCnt"></span>
+      </h2>
+      <div class="scrollbox" id="topWrap"></div>
+    </div>
+  </div>
+
+  <footer>
+    <div>Starlink Data Consumption Dashboard &middot; SmartSource Rentals</div>
+    <div id="foot"></div>
+  </footer>
+</div>
+
+<script>
+/* ============================================================
+   DATA SOURCE
+   Ships with the current export embedded so it renders standalone.
+   To go live against a file refreshing every ~4h, set DATA_URL to
+   a raw CSV/XLSX in the repo — loader below handles either.
+   ============================================================ */
+const DATA_URL = null;   // e.g. ".../Starlink_Usage_Report.csv" (raw GitHub URL)
+const EMBEDDED = {"billingStart":"2026-07-01","billingEnd":"2026-07-31","records":[{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4P0006563862J","plan":"50 GB","planGB":50,"usage":2245.9},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4P00065640BFW","plan":"50 GB","planGB":50,"usage":873.92},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4P00065641GDF","plan":"50 GB","planGB":50,"usage":867.7},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4P00065593VWC","plan":"500 GB","planGB":500,"usage":476.7},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4P00065630DZT","plan":"500 GB","planGB":500,"usage":323.37},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4P00066070HN4","plan":"500 GB","planGB":500,"usage":260.84},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M05413828PCT","plan":"50 GB","planGB":50,"usage":236.48},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4P000655962DJ","plan":"500 GB","planGB":500,"usage":200.69},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M05413821GGW","plan":"50 GB","planGB":50,"usage":188.34},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4P00065612DJF","plan":"500 GB","planGB":500,"usage":169.06},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M05413782GHW","plan":"50 GB","planGB":50,"usage":159.19},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M054138064J9","plan":"50 GB","planGB":50,"usage":132.22},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M05413783PFQ","plan":"50 GB","planGB":50,"usage":118.26},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4P00065633ZXC","plan":"50 GB","planGB":50,"usage":88.54},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M05413810Q4Z","plan":"50 GB","planGB":50,"usage":84.06},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4P00065631CPZ","plan":"50 GB","planGB":50,"usage":80.36},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M05413772977","plan":"500 GB","planGB":500,"usage":66.86},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4P00066848VQM","plan":"50 GB","planGB":50,"usage":65.18},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M05413792H8C","plan":"50 GB","planGB":50,"usage":64.51},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M05413784W4K","plan":"50 GB","planGB":50,"usage":62.47},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M05413769796","plan":"50 GB","planGB":50,"usage":56.79},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M054137987GJ","plan":"50 GB","planGB":50,"usage":54.53},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M05413774JZX","plan":"50 GB","planGB":50,"usage":51.51},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M05413770WCC","plan":"50 GB","planGB":50,"usage":48.22},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M05413773R6G","plan":"50 GB","planGB":50,"usage":47.69},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M05413814GPJ","plan":"500 GB","planGB":500,"usage":47.04},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M05413805MKQ","plan":"50 GB","planGB":50,"usage":43.05},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M054138249M8","plan":"50 GB","planGB":50,"usage":40.07},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M05413794SSC","plan":"50 GB","planGB":50,"usage":39.1},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M05413780XFH","plan":"50 GB","planGB":50,"usage":38.91},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M054138324MW","plan":"50 GB","planGB":50,"usage":36.18},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M05413816N8K","plan":"50 GB","planGB":50,"usage":33.56},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M05413777DGG","plan":"500 GB","planGB":500,"usage":32.02},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M05413809J58","plan":"50 GB","planGB":50,"usage":28.18},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M054138125NW","plan":"50 GB","planGB":50,"usage":25.3},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4P00065644SB2","plan":"500 GB","planGB":500,"usage":24.48},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M0460475549Z","plan":"50 GB","planGB":50,"usage":20.08},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M054138175VJ","plan":"50 GB","planGB":50,"usage":19.48},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M05413781K6C","plan":"50 GB","planGB":50,"usage":19.01},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M05413835RPF","plan":"500 GB","planGB":500,"usage":18.5},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M05413785QCG","plan":"50 GB","planGB":50,"usage":17.87},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M05413823B5P","plan":"50 GB","planGB":50,"usage":17.15},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M05413771PVH","plan":"50 GB","planGB":50,"usage":17.11},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M054138189C7","plan":"500 GB","planGB":500,"usage":17.02},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M04604736T7C","plan":"500 GB","planGB":500,"usage":16.08},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M05413801QJB","plan":"50 GB","planGB":50,"usage":14.64},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M054138222CP","plan":"50 GB","planGB":50,"usage":14.55},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M054137885SM","plan":"50 GB","planGB":50,"usage":14.37},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M05413789Z8C","plan":"50 GB","planGB":50,"usage":14.05},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M05413813HSJ","plan":"50 GB","planGB":50,"usage":12.25},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M05413795QHK","plan":"500 GB","planGB":500,"usage":11.34},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M05413819JV5","plan":"500 GB","planGB":500,"usage":11.04},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M04158973M2C","plan":"500 GB","planGB":500,"usage":10.35},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M02578775B9Q","plan":"500 GB","planGB":500,"usage":10.15},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M05413826Z6Z","plan":"50 GB","planGB":50,"usage":9.74},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M041546939GJ","plan":"500 GB","planGB":500,"usage":7.08},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M044751638F5","plan":"500 GB","planGB":500,"usage":7.01},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M05413803FDK","plan":"50 GB","planGB":50,"usage":6.95},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M054138292ZP","plan":"50 GB","planGB":50,"usage":6.94},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M05413791FK5","plan":"50 GB","planGB":50,"usage":5.41},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M05413790XCD","plan":"50 GB","planGB":50,"usage":5.09},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M05413775N9M","plan":"50 GB","planGB":50,"usage":4.89},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M05413778RBR","plan":"50 GB","planGB":50,"usage":4.71},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M05413797HK5","plan":"50 GB","planGB":50,"usage":3.73},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M04604743HSS","plan":"500 GB","planGB":500,"usage":3.18},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M05413804SKS","plan":"50 GB","planGB":50,"usage":1.98},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M05413827DC4","plan":"50 GB","planGB":50,"usage":1.59},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M05563533M9N","plan":"50 GB","planGB":50,"usage":1.05},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M055635158PC","plan":"50 GB","planGB":50,"usage":0.39},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M05563503XXP","plan":"50 GB","planGB":50,"usage":0.37},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M05563586ZTR","plan":"50 GB","planGB":50,"usage":0.34},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M05563598Z74","plan":"50 GB","planGB":50,"usage":0.16},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M05563517BVR","plan":"50 GB","planGB":50,"usage":0.16},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M05563513GTF","plan":"50 GB","planGB":50,"usage":0.16},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M05563510TWC","plan":"50 GB","planGB":50,"usage":0.15},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M055635329VD","plan":"50 GB","planGB":50,"usage":0.13},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M05563514P8T","plan":"50 GB","planGB":50,"usage":0.12},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M055635088NK","plan":"50 GB","planGB":50,"usage":0.12},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M05563511FF4","plan":"50 GB","planGB":50,"usage":0.12},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M05563509CHJ","plan":"50 GB","planGB":50,"usage":0.12},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M05563512GBQ","plan":"50 GB","planGB":50,"usage":0.12},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M05563584FVC","plan":"50 GB","planGB":50,"usage":0.12},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M05563585TXM","plan":"50 GB","planGB":50,"usage":0.12},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M05563531XSB","plan":"50 GB","planGB":50,"usage":0.11},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M055635305RS","plan":"50 GB","planGB":50,"usage":0.1},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M055635779MM","plan":"50 GB","planGB":50,"usage":0.1},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M055635238J6","plan":"50 GB","planGB":50,"usage":0.1},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M05563554WCW","plan":"50 GB","planGB":50,"usage":0.1},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M05563590ZFQ","plan":"50 GB","planGB":50,"usage":0.1},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M05563524MJ4","plan":"50 GB","planGB":50,"usage":0.1},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M05563528MKX","plan":"50 GB","planGB":50,"usage":0.1},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M05563502GJS","plan":"50 GB","planGB":50,"usage":0.1},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M05563505WPS","plan":"50 GB","planGB":50,"usage":0.1},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M055635979XD","plan":"50 GB","planGB":50,"usage":0.1},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M055635887MK","plan":"50 GB","planGB":50,"usage":0.1},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M05563603CP4","plan":"50 GB","planGB":50,"usage":0.1},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M0556358988Z","plan":"50 GB","planGB":50,"usage":0.1},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M05563562F45","plan":"50 GB","planGB":50,"usage":0.09},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M05563527J4C","plan":"50 GB","planGB":50,"usage":0.09},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M05563504MBB","plan":"50 GB","planGB":50,"usage":0.09},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M05563606ZRC","plan":"50 GB","planGB":50,"usage":0.09},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M05563538RZV","plan":"50 GB","planGB":50,"usage":0.09},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M05563518ZJD","plan":"50 GB","planGB":50,"usage":0.09},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M05563521ZSX","plan":"50 GB","planGB":50,"usage":0.09},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M055635227ZR","plan":"50 GB","planGB":50,"usage":0.09},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M05563610HM2","plan":"50 GB","planGB":50,"usage":0.09},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M055635834N7","plan":"50 GB","planGB":50,"usage":0.09},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M05563520SH2","plan":"50 GB","planGB":50,"usage":0.09},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M05563548P9Q","plan":"50 GB","planGB":50,"usage":0.09},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M05563551N6Q","plan":"50 GB","planGB":50,"usage":0.09},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M055635475JB","plan":"50 GB","planGB":50,"usage":0.09},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M05563560225","plan":"50 GB","planGB":50,"usage":0.09},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M0556355588P","plan":"50 GB","planGB":50,"usage":0.09},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M05563574ZBN","plan":"50 GB","planGB":50,"usage":0.09},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M05563579H9F","plan":"50 GB","planGB":50,"usage":0.09},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M0556351956H","plan":"50 GB","planGB":50,"usage":0.09},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M05563549RSR","plan":"50 GB","planGB":50,"usage":0.09},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4P00072391SZM","plan":"50 GB","planGB":50,"usage":0.06},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4P0007258645B","plan":"50 GB","planGB":50,"usage":0.05},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M05563536BPJ","plan":"50 GB","planGB":50,"usage":0.05},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4P00073152MPN","plan":"50 GB","planGB":50,"usage":0.05},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M05563573WKC","plan":"50 GB","planGB":50,"usage":0.05},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4P000739257CR","plan":"50 GB","planGB":50,"usage":0.04},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M05368200MVF","plan":"50 GB","planGB":50,"usage":0.0},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M054138318Q7","plan":"50 GB","planGB":50,"usage":0.0},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M053683324KZ","plan":"50 GB","planGB":50,"usage":0.0},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M046047467T4","plan":"50 GB","planGB":50,"usage":0.0},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M03867749CW5","plan":"50 GB","planGB":50,"usage":0.0},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M04475152RGR","plan":"50 GB","planGB":50,"usage":0.0},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M04475151HTP","plan":"50 GB","planGB":50,"usage":0.0},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M05413836KJC","plan":"50 GB","planGB":50,"usage":0.0},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4P00065630DZT","plan":"500 GB","planGB":500,"usage":0.0},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4P000668852J9","plan":"50 GB","planGB":50,"usage":0.0},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M05368201SNV","plan":"50 GB","planGB":50,"usage":0.0},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M05413796V9K","plan":"50 GB","planGB":50,"usage":0.0},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M05413834FTH","plan":"50 GB","planGB":50,"usage":0.0},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M05413802FVN","plan":"50 GB","planGB":50,"usage":0.0},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M05413776H84","plan":"50 GB","planGB":50,"usage":0.0},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4P00073915XX6","plan":"50 GB","planGB":50,"usage":0.0},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M05563526WNC","plan":"50 GB","planGB":50,"usage":0.0},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M05563534GZ7","plan":"50 GB","planGB":50,"usage":0.0},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M05563525VC6","plan":"50 GB","planGB":50,"usage":0.0},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M05563537G4G","plan":"50 GB","planGB":50,"usage":0.0},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M05563529K2D","plan":"50 GB","planGB":50,"usage":0.0},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M05563593DMC","plan":"50 GB","planGB":50,"usage":0.0},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M05368340DMZ","plan":"50 GB","planGB":50,"usage":0.0},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M05368336DBC","plan":"50 GB","planGB":50,"usage":0.0},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M05368219KRH","plan":"50 GB","planGB":50,"usage":0.0},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M05413811F4Q","plan":"50 GB","planGB":50,"usage":0.0},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4P000739124KF","plan":"50 GB","planGB":50,"usage":0.0},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4P00073957GV5","plan":"50 GB","planGB":50,"usage":0.0},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4P00073918HBX","plan":"50 GB","planGB":50,"usage":0.0},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M05563571G8W","plan":"50 GB","planGB":50,"usage":0.0},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M0541381584X","plan":"50 GB","planGB":50,"usage":0.0},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M04475159PMD","plan":"50 GB","planGB":50,"usage":0.0},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M05413840D9J","plan":"50 GB","planGB":50,"usage":0.0},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M05413839D24","plan":"50 GB","planGB":50,"usage":0.0},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4P00066915CBF","plan":"500 GB","planGB":500,"usage":0.0},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M05368213974","plan":"50 GB","planGB":50,"usage":0.0},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M05368226W57","plan":"50 GB","planGB":50,"usage":0.0},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M05413808FFZ","plan":"50 GB","planGB":50,"usage":0.0},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M05413837SMB","plan":"50 GB","planGB":50,"usage":0.0},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M054138007JF","plan":"50 GB","planGB":50,"usage":0.0},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M046047384RX","plan":"50 GB","planGB":50,"usage":0.0},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M025787739XF","plan":"50 GB","planGB":50,"usage":0.0},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M05413779VSD","plan":"50 GB","planGB":50,"usage":0.0},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M05413820QXJ","plan":"50 GB","planGB":50,"usage":0.0},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M05368220FG8","plan":"50 GB","planGB":50,"usage":0.0},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M05368221HQ5","plan":"50 GB","planGB":50,"usage":0.0},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M05368206BZP","plan":"50 GB","planGB":50,"usage":0.0},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M05368194X6V","plan":"50 GB","planGB":50,"usage":0.0},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M054138074NS","plan":"50 GB","planGB":50,"usage":0.0},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M046047397TM","plan":"50 GB","planGB":50,"usage":0.0},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M04604734ZZX","plan":"50 GB","planGB":50,"usage":0.0},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M04604740BM6","plan":"50 GB","planGB":50,"usage":0.0},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M054138257Z7","plan":"50 GB","planGB":50,"usage":0.0},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4P00073954DZ8","plan":"50 GB","planGB":50,"usage":0.0},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4P00073922FPF","plan":"50 GB","planGB":50,"usage":0.0},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M04475128THH","plan":"50 GB","planGB":50,"usage":0.0},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M04604747TPT","plan":"50 GB","planGB":50,"usage":0.0},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M054137938P7","plan":"50 GB","planGB":50,"usage":0.0},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M05413787HHK","plan":"50 GB","planGB":50,"usage":0.0},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M04604741P2X","plan":"50 GB","planGB":50,"usage":0.0},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M03986264P49","plan":"50 GB","planGB":50,"usage":0.0},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M05413786BXC","plan":"50 GB","planGB":50,"usage":0.0},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M046047372KJ","plan":"500 GB","planGB":500,"usage":0.0},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M038677586ZX","plan":"500 GB","planGB":500,"usage":0.0},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M03866627GHD","plan":"500 GB","planGB":500,"usage":0.0},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M03867737P9P","plan":"500 GB","planGB":500,"usage":0.0},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M03867766NGK","plan":"500 GB","planGB":500,"usage":0.0},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M03476114VCM","plan":"500 GB","planGB":500,"usage":0.0},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M03986275Q4M","plan":"500 GB","planGB":500,"usage":0.0},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M04158951RH6","plan":"500 GB","planGB":500,"usage":0.0},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M04476539RJ5","plan":"500 GB","planGB":500,"usage":0.0},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M03476116F45","plan":"500 GB","planGB":500,"usage":0.0},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M04606110GTV","plan":"500 GB","planGB":500,"usage":0.0},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M04475149XG5","plan":"500 GB","planGB":500,"usage":0.0},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M041536494G6","plan":"500 GB","planGB":500,"usage":0.0},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M0415609166K","plan":"500 GB","planGB":500,"usage":0.0},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M04604745G8Z","plan":"500 GB","planGB":500,"usage":0.0},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M04604744V6K","plan":"500 GB","planGB":500,"usage":0.0},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4P00066901JZZ","plan":"50 GB","planGB":50,"usage":0.0},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M04606113TPB","plan":"50 GB","planGB":50,"usage":0.0},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M04350554X4Z","plan":"50 GB","planGB":50,"usage":0.0},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M04604742S6S","plan":"50 GB","planGB":50,"usage":0.0},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M03866596RZG","plan":"50 GB","planGB":50,"usage":0.0},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M054137997HR","plan":"50 GB","planGB":50,"usage":0.0},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M05413830JN7","plan":"50 GB","planGB":50,"usage":0.0},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M04158967K28","plan":"500 GB","planGB":500,"usage":0.0},{"acct":"05900510","loc":"Los Angeles CA","kit":"KIT4M03986267RWH","plan":"500 GB","planGB":500,"usage":0.0}]};
+const PLAN_LIMITS = {"50 GB":50,"500 GB":500};
+
+function fmt(n,d=0){return Number(n).toLocaleString(undefined,{minimumFractionDigits:d,maximumFractionDigits:d});}
+function tb(gb){return gb>=1000 ? (gb/1000).toFixed(2)+' TB' : fmt(gb,1)+' GB';}
+
+const FLEET_PLAN_GB = 50; // every kit is actually on a 50 GB plan — source "Plan Amount" column is unreliable and mislabels some as 500 GB, so it's overridden here rather than trusted per-row
+
+// Kit -> eCode lookup, hardcoded from SmartSource_Starlink_Main_Tracker.xlsx (Serial # column C matched to eCode column Y).
+// 137 of 210 kits had an eCode on file as of this export; kits not listed here render a blank eCode until the tracker is updated.
+const ECODE_MAP = {"KIT4P000668852J9":"812925","KIT4P00066915CBF":"812921","KIT4P00066901JZZ":"812926","KIT4P00065641GDF":"812924","KIT4P00065633ZXC":"812922","KIT4P00065640BFW":"812929","KIT4P00065644SB2":"812928","KIT4P0006563862J":"812927","KIT4P00066848VQM":"812923","KIT4P00065631CPZ":"812930","KIT4M054137885SM":"812846","KIT4M05413834FTH":"812817","KIT4M05413808FFZ":"812828","KIT4M05413816N8K":"812832","KIT4M05413772977":"812841","KIT4M0541381584X":"812810","KIT4M05413789Z8C":"812840","KIT4M054138175VJ":"812823","KIT4M054137997HR":"812825","KIT4M05413805MKQ":"812849","KIT4M05413777DGG":"812802","KIT4M054138292ZP":"812784","KIT4M054138324MW":"812834","KIT4M05413809J58":"812805","KIT4M05413770WCC":"812819","KIT4M05413813HSJ":"812797","KIT4M05413814GPJ":"812812","KIT4M05413819JV5":"812796","KIT4M05413802FVN":"812813","KIT4M05413797HK5":"812808","KIT4M05413781K6C":"812798","KIT4M05413792H8C":"812803","KIT4M054137987GJ":"812795","KIT4M05413828PCT":"812799","KIT4M054138189C7":"812831","KIT4M05413821GGW":"812830","KIT4M05413803FDK":"812850","KIT4M05413790XCD":"812822","KIT4M054138222CP":"812811","KIT4M054138249M8":"812794","KIT4M05413823B5P":"812837","KIT4M05413782GHW":"812835","KIT4M05413786BXC":"812838","KIT4M05413780XFH":"812833","KIT4M054138064J9":"812844","KIT4M05413826Z6Z":"812804","KIT4M05413827DC4":"812829","KIT4M05413794SSC":"812847","KIT4M05413773R6G":"812807","KIT4M05413787HHK":"812809","KIT4M05413774JZX":"812836","KIT4M05413835RPF":"812827","KIT4M054138125NW":"812826","KIT4M05413810Q4Z":"812815","KIT4M054138318Q7":"812814","KIT4M054138074NS":"812816","KIT4M05413801QJB":"812824","KIT4M054137938P7":"812848","KIT4M05413795QHK":"812801","KIT4M05413796V9K":"812820","KIT4M05413785QCG":"812806","KIT4M05413778RBR":"812843","KIT4M05413769796":"812839","KIT4M05413775N9M":"812818","KIT4M05413771PVH":"812800","KIT4M05413784W4K":"812821","KIT4M05413783PFQ":"812845","KIT4M05413791FK5":"812842","KIT4M05563584FVC":"814439","KIT4M05563528MKX":"814471","KIT4M05563538RZV":"814459","KIT4M05563533M9N":"814485","KIT4M05563610HM2":"814486","KIT4M0556351956H":"814477","KIT4M05563524MJ4":"814472","KIT4M05563520SH2":"814478","KIT4M05563526WNC":"814463","KIT4M05563534GZ7":"814467","KIT4M05563521ZSX":"814476","KIT4M05563590ZFQ":"814461","KIT4M055635227ZR":"814482","KIT4M05563525VC6":"814458","KIT4M05563529K2D":"814473","KIT4M05563537G4G":"814456","KIT4M055635329VD":"814479","KIT4M05563536BPJ":"814466","KIT4M055635305RS":"814440","KIT4M05563598Z74":"814474","KIT4M05563527J4C":"814452","KIT4M055635158PC":"814457","KIT4M05563571G8W":"814481","KIT4M05563593DMC":"814442","KIT4M05563586ZTR":"814445","KIT4M0556358988Z":"814484","KIT4M05563549RSR":"814483","KIT4M05563510TWC":"814433","KIT4M05563606ZRC":"814464","KIT4M05563511FF4":"814437","KIT4M05563513GTF":"814432","KIT4M05563585TXM":"814475","KIT4M05563512GBQ":"814435","KIT4M055635887MK":"814446","KIT4M055635238J6":"814449","KIT4M055635979XD":"814441","KIT4M05563551N6Q":"814450","KIT4M05563503XXP":"814430","KIT4M05563531XSB":"814469","KIT4M05563502GJS":"814470","KIT4M055635834N7":"814462","KIT4M05563509CHJ":"814431","KIT4M0556355588P":"814455","KIT4M05563573WKC":"814488","KIT4M05563603CP4":"814447","KIT4M05563579H9F":"814480","KIT4M05563518ZJD":"814451","KIT4M05563505WPS":"814448","KIT4M05563554WCW":"814444","KIT4M05563574ZBN":"814453","KIT4M05563548P9Q":"814468","KIT4M05563560225":"814454","KIT4M055635475JB":"814465","KIT4M055635779MM":"814487","KIT4M05563517BVR":"814438","KIT4M05563504MBB":"814460","KIT4M05563562F45":"814443","KIT4M05563514P8T":"814436","KIT4M055635088NK":"814434","KIT4P00073152MPN":"814494","KIT4P00072391SZM":"814493","KIT4P0007258645B":"814495","KIT4P00073954DZ8":"814644","KIT4P00073915XX6":"814643","KIT4P000739124KF":"814640","KIT4P00073957GV5":"814642","KIT4P00073918HBX":"814645","KIT4P000739257CR":"814609","KIT4P00073922FPF":"814641"};
+
+function compute(data){
+  // normalize every record to the real plan (50 GB) regardless of what the source file says
+  const recs = data.records.map(r=>({...r, plan:'50 GB', planGB:FLEET_PLAN_GB, ecode:ECODE_MAP[r.kit]||r.ecode||''}));
+  const total = recs.reduce((s,r)=>s+r.usage,0);
+  const pool = recs.length * FLEET_PLAN_GB;
+  const active = recs.filter(r=>r.usage>0).length;
+  const over = recs.filter(r=>r.planGB>0 && r.usage>r.planGB)
+                   .map(r=>({...r,overBy:r.usage-r.planGB}))
+                   .sort((a,b)=>b.overBy-a.overBy);
+  const top = [...recs].sort((a,b)=>b.usage-a.usage);
+  const tiers={};
+  recs.forEach(r=>{const k=r.plan||'Other';(tiers[k]=tiers[k]||{n:0,gb:0}); tiers[k].n++; tiers[k].gb+=r.usage;});
+  return {recs,total,pool,active,over,top,tiers};
+}
+
+function render(data){
+  const m=compute(data);
+  const bs=new Date(data.billingStart+'T00:00:00'), be=new Date(data.billingEnd+'T00:00:00');
+  const opt={month:'short',day:'numeric',year:'numeric'};
+  const cycle=bs.toLocaleDateString(undefined,opt)+' \u2013 '+be.toLocaleDateString(undefined,opt);
+
+  document.getElementById('meta').innerHTML =
+    'Billing cycle &nbsp;<b>'+cycle+'</b><br>'+
+    'Data refreshed &nbsp;<span class="stamp">'+new Date().toLocaleString(undefined,{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})+'</span>';
+
+  const idle=m.recs.length-m.active;
+  const t50=m.tiers['50 GB']||{n:0,gb:0};
+  const poolPct = m.pool>0 ? Math.min(100, m.total/m.pool*100) : 0;
+
+  document.getElementById('hero').innerHTML = [
+    heroCard('Total Data Consumed', (m.total/1000).toFixed(2), 'TB', 'amber', fmt(m.total,0)+' GB this cycle'),
+    heroCard('Data Pool', (m.pool/1000).toFixed(2), 'TB', 'green', fmt(m.pool,0)+' GB allotted &middot; <span style="color:var(--red);font-weight:700">'+poolPct.toFixed(0)+'% used</span>', poolPct, 'var(--green)'),
+    heroCard('Active Kits', fmt(m.active), '', 'blue', 'of '+m.recs.length+' provisioned'),
+    heroCard('Idle Kits', fmt(idle), '', 'green', '0 GB used this cycle'),
+    heroCard('Over Plan', fmt(m.over.length), '', 'red', 'kits past allotment'),
+    heroCard('50 GB Plan', fmt(t50.n), 'kits', 'blue', fmt(t50.gb,0)+' GB used this cycle')
+  ].join('');
+
+  document.getElementById('sumbar').innerHTML =
+    sb('Kits total',m.recs.length)+
+    sb('50 GB plans',t50.n)+
+    sb('Data pool', tb(m.pool))+
+    sb('Avg / active kit', m.active? tb(m.total/m.active):'\u2014')+
+    sb('Peak kit', tb(m.top[0]?m.top[0].usage:0));
+
+  document.getElementById('overCnt').textContent = m.over.length+' kits';
+  const ow=document.getElementById('overWrap');
+  if(!m.over.length){ ow.innerHTML='<div class="empty">No kits over plan allotment this cycle.</div>'; }
+  else{
+    let rows=m.over.map(r=>`<tr>
+      <td class="kit">${r.kit}</td>
+      <td class="ecode">${r.ecode||''}</td>
+      <td><span class="pill ${r.planGB===50?'p50':'p500'}">${r.plan}</span></td>
+      <td class="num">${fmt(r.usage,1)}</td>
+      <td class="num over">+${fmt(r.overBy,1)}</td></tr>`).join('');
+    ow.innerHTML=`<table><thead><tr><th>Kit</th><th>ECODE</th><th>Plan</th><th>Used (GB)</th><th>Over (GB)</th></tr></thead><tbody>${rows}</tbody></table>`;
+  }
+
+  document.getElementById('topCnt').textContent = m.top.length+' kits';
+  const max=m.top[0]?m.top[0].usage:1;
+  let trows=m.top.map((r,i)=>`<tr>
+    <td class="rank">${i+1}</td>
+    <td class="kit">${r.kit}</td>
+    <td class="ecode">${r.ecode||''}</td>
+    <td><span class="pill ${r.planGB===50?'p50':'p500'}">${r.plan}</span></td>
+    <td style="width:38%"><div class="ubar"><i style="width:${Math.max(4,r.usage/max*100)}%"></i></div></td>
+    <td class="num">${fmt(r.usage,1)}</td></tr>`).join('');
+  document.getElementById('topWrap').innerHTML=`<table><thead><tr><th>#</th><th>Kit</th><th>ECODE</th><th>Plan</th><th>Usage</th><th>GB</th></tr></thead><tbody>${trows}</tbody></table>`;
+
+  document.getElementById('foot').innerHTML='Total '+tb(m.total)+' of '+tb(m.pool)+' pool &middot; '+m.recs.length+' kits';
+}
+function heroCard(label,val,unit,cls,foot,pct,col){
+  const barHtml = (pct!=null) ? `<div class="bar"><i style="width:${pct}%;background:${col}"></i></div>` : '';
+  return `<div class="card metric"><div class="label">${label}</div><div class="val ${cls}">${val}${unit?'<span class="u">'+unit+'</span>':''}</div><div class="foot">${foot}</div>${barHtml}</div>`;
+}
+function sb(k,v){return `<div class="it">${k} <b>${v}</b></div>`;}
+
+async function boot(){
+  if(!DATA_URL){ render(EMBEDDED); return; }
+  try{
+    if(DATA_URL.toLowerCase().endsWith('.xlsx')){
+      await loadScript('https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js');
+      const buf=await (await fetch(DATA_URL,{cache:'no-store'})).arrayBuffer();
+      render(parseXlsx(buf));
+    }else{
+      const txt=await (await fetch(DATA_URL,{cache:'no-store'})).text();
+      render(parseCsv(txt));
+    }
+  }catch(e){ console.error('Live load failed, using embedded snapshot:',e); render(EMBEDDED); }
+}
+function loadScript(src){return new Promise((res,rej)=>{const s=document.createElement('script');s.src=src;s.onload=res;s.onerror=rej;document.head.appendChild(s);});}
+function rowsToPayload(header,rows){
+  const idx=n=>header.findIndex(h=>String(h).trim().toLowerCase()===n);
+  const iKit=idx('kit'),iPlan=idx('plan amount'),iUse=idx('data usage (gb)'),iEcode=idx('ecode');
+  const recs=[];
+  for(const r of rows){
+    const co=String(r[0]||'').trim(); if(co==='Total'||co.startsWith('Applied filters')||!r[iKit])continue;
+    const plan=String(r[iPlan]||'').trim();
+    recs.push({kit:r[iKit],ecode:(iEcode>=0?String(r[iEcode]||'').trim():''),plan,planGB:PLAN_LIMITS[plan]||0,usage:parseFloat(r[iUse])||0});
+  }
+  return {billingStart:EMBEDDED.billingStart,billingEnd:EMBEDDED.billingEnd,records:recs};
+}
+function parseXlsx(buf){const wb=XLSX.read(buf,{type:'array'});const ws=wb.Sheets[wb.SheetNames[0]];const aoa=XLSX.utils.sheet_to_json(ws,{header:1,raw:true});return rowsToPayload(aoa[0],aoa.slice(1));}
+function parseCsv(txt){const lines=txt.split(/\r?\n/).filter(l=>l.length);const split=l=>{const o=[];let c='',q=false;for(const ch of l){if(ch==='"')q=!q;else if(ch===','&&!q){o.push(c);c='';}else c+=ch;}o.push(c);return o;};return rowsToPayload(split(lines[0]),lines.slice(1).map(split));}
+
+boot();
+</script>
+</body>
+</html>
