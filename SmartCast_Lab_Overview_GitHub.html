@@ -24,6 +24,7 @@
   .lab-status.active .status-dot { background: #34d399; box-shadow: 0 0 6px #34d399; }
   .lab-status.inactive { color: #ef4444; }
   .lab-status.inactive .status-dot { background: #ef4444; box-shadow: 0 0 6px rgba(239,68,68,0.65); }
+  .lab-status .status-window { color: #64748b; font-weight: 500; font-size: 10px; }
   .metric-row { display: flex; justify-content: flex-start; gap: 20px; margin-bottom: 8px; }
   .metric-block { flex: 1 1 0; min-width: 0; max-width: 104px; }
   .metric-block.mid { text-align: left; }
@@ -73,6 +74,7 @@
   .monitor-frame.spotlight .lab-card.spot-active .lab-tag { font-size: 18px; }
   .monitor-frame.spotlight .lab-card.spot-active .lab-status { font-size: 18px; gap: 9px; }
   .monitor-frame.spotlight .lab-card.spot-active .lab-status .status-dot { width: 16px; height: 16px; }
+  .monitor-frame.spotlight .lab-card.spot-active .lab-status .status-window { font-size: 15px; }
   .monitor-frame.spotlight .lab-card.spot-active .metric-label { font-size: 18px; margin-bottom: 6px; }
   .monitor-frame.spotlight .lab-card.spot-active .metric-value { font-size: 64px; }
   .monitor-frame.spotlight .lab-card.spot-active .metric-row { justify-content: space-between; gap: 0; }
@@ -437,7 +439,7 @@ function buildDashboard(data) {
           <div class="lab-name">${lab}</div>
           <div class="lab-local"><span class="lab-local-time" data-lab="${lab}">${localTimeFor(lab)}</span></div>
         </div>
-        <div class="lab-status ${statusActive ? 'active' : 'inactive'}"><span class="status-dot"></span><span class="status-word">${statusActive ? 'ACTIVE' : 'INACTIVE'}</span></div>
+        <div class="lab-status ${statusActive ? 'active' : 'inactive'}"><span class="status-dot"></span><span class="status-word">${statusActive ? 'ACTIVE' : 'INACTIVE'}</span><span class="status-window">(last ${ACTIVE_WINDOW_MIN} min)</span></div>
         <div class="lab-tag">Machines Imaged</div>
       </div>
       <div class="metric-row">
