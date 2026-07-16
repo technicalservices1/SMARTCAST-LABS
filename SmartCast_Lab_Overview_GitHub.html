@@ -10,6 +10,7 @@
   .monitor-frame { width: 117.6%; transform: scale(0.85); transform-origin: top left; background: #0f1117; border-radius: 12px; display: flex; flex-direction: column; padding: 20px; }
   .dash-header { display: flex; align-items: center; margin-bottom: 18px; }
   .dash-title { font-size: 24px; font-weight: 600; color: #ffffff; letter-spacing: 0.5px; }
+  .dash-since { font-size: 15px; font-weight: 400; color: #94a3b8; letter-spacing: 0.3px; }
   .dash-subtitle { font-size: 11px; color: #60a5fa; text-transform: uppercase; letter-spacing: 0.8px; margin-top: 3px; }
   .dash-subtitle span { color: #f59e0b; font-weight: 500; }
   .lab-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; flex: 1; min-height: 620px; }
@@ -96,7 +97,7 @@
 <div class="monitor-frame">
   <div class="dash-header" style="justify-content:space-between;">
     <div>
-      <div class="dash-title">SmartCast Imaging — Lab Overview</div>
+      <div class="dash-title">SmartCast Imaging — Lab Overview<span class="dash-since" id="recordingSince"></span></div>
       <div class="dash-subtitle">Most Recent Entry: <span id="lastEntryDisplay">--</span></div>
     </div>
     <div style="text-align:right;">
@@ -368,6 +369,23 @@ function buildDashboard(data) {
       document.getElementById('lastEntryDisplay').textContent = label;
     }
   }
+  // Recording-since: earliest parseable date across included branches (self-updates if the log is trimmed).
+  let firstDate = null;
+  data.forEach(r => {
+    if (EXCLUDED.includes(getLocation(r['ServerName'] || ''))) return;
+    const d = parseRowDate(r);
+    if (d && (!firstDate || d < firstDate)) firstDate = d;
+  });
+  const sinceEl = document.getElementById('recordingSince');
+  if (sinceEl) {
+    if (firstDate) {
+      const mo = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+      sinceEl.textContent = ` · Recording since ${mo[firstDate.getMonth()]} ${firstDate.getDate()}, ${firstDate.getFullYear()}`;
+    } else {
+      sinceEl.textContent = '';
+    }
+  }
+
   const labGrid = document.getElementById('labGrid');
   labGrid.innerHTML = '';
 
