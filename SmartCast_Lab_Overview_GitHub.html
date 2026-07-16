@@ -439,7 +439,7 @@ function buildDashboard(data) {
           <div class="lab-name">${lab}</div>
           <div class="lab-local"><span class="lab-local-time" data-lab="${lab}">${localTimeFor(lab)}</span></div>
         </div>
-        <div class="lab-status ${statusActive ? 'active' : 'inactive'}"><span class="status-dot"></span><span class="status-word">${statusActive ? 'ACTIVE' : 'INACTIVE'}</span><span class="status-window">(last ${ACTIVE_WINDOW_MIN} min)</span></div>
+        <div class="lab-status ${statusActive ? 'active' : 'inactive'}"><span class="status-dot"></span><span class="status-word">${statusActive ? 'ACTIVE' : 'INACTIVE'}</span>${statusActive ? `<span class="status-window">(last ${ACTIVE_WINDOW_MIN} min)</span>` : ''}</div>
         <div class="lab-tag">Machines Imaged</div>
       </div>
       <div class="metric-row">
