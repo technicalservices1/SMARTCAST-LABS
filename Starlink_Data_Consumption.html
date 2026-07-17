@@ -200,21 +200,29 @@ function render(data){
     'Data refreshed &nbsp;<span class="stamp">'+new Date().toLocaleString(undefined,{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})+'</span>';
 
   const idle=m.recs.length-m.active;
-  const t50=m.tiers['50 GB']||{n:0,gb:0};
   const poolPct = m.pool>0 ? Math.min(100, m.total/m.pool*100) : 0;
+
+  // Build one tile per plan tier actually present in the file — fully data-driven,
+  // not hardcoded to any specific plan size. Sorted by plan size ascending.
+  const tierColors = ['blue','violet','green','amber'];
+  const tierNames = Object.keys(m.tiers).sort((a,b)=>(parseFloat(a)||0)-(parseFloat(b)||0));
+  const tierCards = tierNames.map((name,i)=>{
+    const t = m.tiers[name];
+    const color = tierColors[i % tierColors.length];
+    return heroCard(name+' Plan', fmt(t.n), 'kits', color, fmt(t.gb,0)+' GB used this cycle');
+  });
 
   document.getElementById('hero').innerHTML = [
     heroCard('Total Data Consumed', (m.total/1000).toFixed(2), 'TB', 'amber', fmt(m.total,0)+' GB this cycle'),
     heroCard('Data Pool', (m.pool/1000).toFixed(2), 'TB', 'green', fmt(m.pool,0)+' GB allotted &middot; <span style="color:var(--red);font-weight:700">'+poolPct.toFixed(0)+'% used</span>', poolPct, 'var(--green)'),
     heroCard('Active Kits', fmt(m.active), '', 'blue', 'of '+m.recs.length+' provisioned'),
     heroCard('Idle Kits', fmt(idle), '', 'green', '0 GB used this cycle'),
-    heroCard('Over Plan', fmt(m.over.length), '', 'red', 'kits past allotment'),
-    heroCard('50 GB Plan', fmt(t50.n), 'kits', 'blue', fmt(t50.gb,0)+' GB used this cycle')
+    ...tierCards
   ].join('');
 
   document.getElementById('sumbar').innerHTML =
     sb('Kits total',m.recs.length)+
-    sb('50 GB plans',t50.n)+
+    tierNames.map(name=>sb(name+' plans', m.tiers[name].n)).join('')+
     sb('Data pool', tb(m.pool))+
     sb('Avg / active kit', m.active? tb(m.total/m.active):'\u2014')+
     sb('Peak kit', tb(m.top[0]?m.top[0].usage:0));
