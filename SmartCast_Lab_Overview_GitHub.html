@@ -727,9 +727,9 @@ function renderPanelContents(lab) {
     const trs = recent.map(r => {
       const d = parseRowDate(r);
       const when = d ? `${mo[d.getMonth()]} ${d.getDate()} · ${esc(r['StartTime'] || '')}` : esc(r['StartTime'] || '');
-      return `<tr><td>${when}</td><td>${esc(r['Model'])}</td><td class="img" title="${esc(r['ImageName'])}">${esc(r['ImageName'])}</td><td class="num">${esc(r['ClientCount'])}</td><td class="num">${esc(r['TotalTime'])}</td><td>${esc(r['ServerName'])}</td></tr>`;
+      return `<tr><td>${when}</td><td>${esc(r['Model'])}</td><td class="img" title="${esc(r['ImageName'])}">${esc(r['ImageName'])}</td><td class="num">${esc(r['ClientCount'])}</td><td class="num">${esc(r['ImageSize'])}</td><td class="num">${esc(r['TotalTime'])}</td><td>${esc(r['ServerName'])}</td></tr>`;
     }).join('');
-    bodyHtml = `<table class="lab-panel-table"><thead><tr><th>When Ran</th><th>Model</th><th>Image</th><th class="num">Clients</th><th class="num">Total Time</th><th>Server</th></tr></thead><tbody>${trs}</tbody></table>`;
+    bodyHtml = `<table class="lab-panel-table"><thead><tr><th>When Ran</th><th>Model</th><th>Image</th><th class="num">Clients</th><th class="num">Size</th><th class="num">Total Time</th><th>Server</th></tr></thead><tbody>${trs}</tbody></table>`;
   }
   document.getElementById('labPanelTitle').textContent = `${lab} — Last ${N} Sessions`;
   document.getElementById('labPanelBody').innerHTML = bodyHtml;
