@@ -34,6 +34,12 @@
   .metric .foot{color:var(--mut);font-size:11.5px;margin-top:6px}
   .metric .bar{height:5px;border-radius:4px;background:var(--line);margin-top:11px;overflow:hidden}
   .metric .bar>i{display:block;height:100%}
+  .card.metric.clickable{cursor:pointer;transition:border-color .15s,background .15s}
+  .card.metric.clickable:hover{border-color:var(--amber);background:var(--panel2)}
+  .card.metric.clickable.active-filter{border-color:var(--amber);background:rgba(245,158,11,.06)}
+  .filter-note{display:flex;align-items:center;gap:10px;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.25);border-radius:10px;padding:9px 16px;margin-bottom:14px;font-size:12.5px;color:#f6d38a}
+  .filter-note button{margin-left:auto;background:none;border:1px solid rgba(245,158,11,.4);color:#f6d38a;border-radius:6px;padding:3px 10px;font-size:11.5px;cursor:pointer;font-weight:600}
+  .filter-note button:hover{background:rgba(245,158,11,.15)}
 
   .sumbar{display:flex;flex-wrap:wrap;gap:26px;background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:10px 22px;margin-bottom:14px}
   .sumbar .it{font-size:12.5px;color:var(--mut)}
@@ -92,6 +98,7 @@
 
   <div class="hero" id="hero"></div>
   <div class="sumbar" id="sumbar"></div>
+  <div class="filter-note" id="filterNote" style="display:none"></div>
 
   <div class="cols">
     <div class="card">
@@ -189,6 +196,9 @@ function compute(data){
   return {recs,total,pool,active,over,top,tiers};
 }
 
+let activePlanFilter = null;   // null = no filter, otherwise a plan name string like "50 GB"
+let activeStatusFilter = null; // null = no filter, otherwise 'active' or 'idle'
+
 function render(data){
   const m=compute(data);
   const bs=new Date(data.billingStart+'T00:00:00'), be=new Date(data.billingEnd+'T00:00:00');
@@ -204,21 +214,34 @@ function render(data){
 
   // Build one tile per plan tier actually present in the file — fully data-driven,
   // not hardcoded to any specific plan size. Sorted by plan size ascending.
+  // Each tile is clickable: click filters both tables down to just that plan tier.
   const tierColors = ['blue','violet','green','amber'];
   const tierNames = Object.keys(m.tiers).sort((a,b)=>(parseFloat(a)||0)-(parseFloat(b)||0));
   const tierCards = tierNames.map((name,i)=>{
     const t = m.tiers[name];
     const color = tierColors[i % tierColors.length];
-    return heroCard(name+' Plan', fmt(t.n), 'kits', color, fmt(t.gb,0)+' GB used this cycle');
+    const isActive = activePlanFilter===name;
+    return heroCard(name+' Plan', fmt(t.n), 'kits', color, fmt(t.gb,0)+' GB used this cycle', null, null, {clickable:true, planName:name, active:isActive});
   });
 
   document.getElementById('hero').innerHTML = [
     heroCard('Total Data Consumed', (m.total/1000).toFixed(2), 'TB', 'amber', fmt(m.total,0)+' GB this cycle'),
     heroCard('Data Pool', (m.pool/1000).toFixed(2), 'TB', 'green', fmt(m.pool,0)+' GB allotted &middot; <span style="color:var(--red);font-weight:700">'+poolPct.toFixed(0)+'% used</span>', poolPct, 'var(--green)'),
-    heroCard('Active Kits', fmt(m.active), '', 'blue', 'of '+m.recs.length+' provisioned'),
-    heroCard('Idle Kits', fmt(idle), '', 'green', '0 GB used this cycle'),
+    heroCard('Active Kits', fmt(m.active), '', 'blue', 'of '+m.recs.length+' provisioned', null, null, {clickable:true, statusName:'active', active:activeStatusFilter==='active'}),
+    heroCard('Idle Kits', fmt(idle), '', 'green', '0 GB used this cycle', null, null, {clickable:true, statusName:'idle', active:activeStatusFilter==='idle'}),
     ...tierCards
   ].join('');
+
+  // wire up click handlers on the tier tiles just rendered
+  document.querySelectorAll('#hero .card.clickable').forEach(el=>{
+    el.addEventListener('click', ()=>{
+      const plan = el.getAttribute('data-plan');
+      const status = el.getAttribute('data-status');
+      if(plan!=null){ activePlanFilter = (activePlanFilter===plan) ? null : plan; }
+      if(status!=null){ activeStatusFilter = (activeStatusFilter===status) ? null : status; }
+      render(data);
+    });
+  });
 
   document.getElementById('sumbar').innerHTML =
     sb('Kits total',m.recs.length)+
@@ -227,11 +250,32 @@ function render(data){
     sb('Avg / active kit', m.active? tb(m.total/m.active):'\u2014')+
     sb('Peak kit', tb(m.top[0]?m.top[0].usage:0));
 
-  document.getElementById('overCnt').textContent = m.over.length+' kits';
+  // filter note banner — combines plan + status filters when both are active
+  const fn = document.getElementById('filterNote');
+  if(activePlanFilter || activeStatusFilter){
+    const parts = [];
+    if(activeStatusFilter) parts.push(activeStatusFilter==='active' ? 'Active' : 'Idle');
+    if(activePlanFilter) parts.push(activePlanFilter);
+    fn.style.display='flex';
+    fn.innerHTML = `<span>Showing only <b>${parts.join(' \u00b7 ')}</b> kits</span><button id="clearFilterBtn">Clear filter</button>`;
+    document.getElementById('clearFilterBtn').addEventListener('click', ()=>{ activePlanFilter=null; activeStatusFilter=null; render(data); });
+  } else {
+    fn.style.display='none';
+    fn.innerHTML='';
+  }
+
+  const matchesFilters = r =>
+    (!activePlanFilter || r.plan===activePlanFilter) &&
+    (!activeStatusFilter || (activeStatusFilter==='active' ? r.usage>0 : r.usage===0));
+
+  const overFiltered = m.over.filter(matchesFilters);
+  const topFiltered = m.top.filter(matchesFilters);
+
+  document.getElementById('overCnt').textContent = overFiltered.length+' kits';
   const ow=document.getElementById('overWrap');
-  if(!m.over.length){ ow.innerHTML='<div class="empty">No kits over plan allotment this cycle.</div>'; }
+  if(!overFiltered.length){ ow.innerHTML='<div class="empty">No kits over plan allotment'+((activePlanFilter||activeStatusFilter)?' match this filter':'')+' this cycle.</div>'; }
   else{
-    let rows=m.over.map(r=>`<tr>
+    let rows=overFiltered.map(r=>`<tr>
       <td class="kit">${r.kit}</td>
       <td class="ecode">${r.ecode||''}</td>
       <td><span class="pill ${r.planGB===50?'p50':'p500'}">${r.plan}</span></td>
@@ -240,9 +284,9 @@ function render(data){
     ow.innerHTML=`<table><thead><tr><th>Kit</th><th>ECODE</th><th>Plan</th><th>Used (GB)</th><th>Over (GB)</th></tr></thead><tbody>${rows}</tbody></table>`;
   }
 
-  document.getElementById('topCnt').textContent = m.top.length+' kits';
-  const max=m.top[0]?m.top[0].usage:1;
-  let trows=m.top.map((r,i)=>`<tr>
+  document.getElementById('topCnt').textContent = topFiltered.length+' kits';
+  const max=topFiltered[0]?topFiltered[0].usage:1;
+  let trows=topFiltered.map((r,i)=>`<tr>
     <td class="rank">${i+1}</td>
     <td class="kit">${r.kit}</td>
     <td class="ecode">${r.ecode||''}</td>
@@ -253,9 +297,14 @@ function render(data){
 
   document.getElementById('foot').innerHTML='Total '+tb(m.total)+' of '+tb(m.pool)+' pool &middot; '+m.recs.length+' kits';
 }
-function heroCard(label,val,unit,cls,foot,pct,col){
+function heroCard(label,val,unit,cls,foot,pct,col,opts){
   const barHtml = (pct!=null) ? `<div class="bar"><i style="width:${pct}%;background:${col}"></i></div>` : '';
-  return `<div class="card metric"><div class="label">${label}</div><div class="val ${cls}">${val}${unit?'<span class="u">'+unit+'</span>':''}</div><div class="foot">${foot}</div>${barHtml}</div>`;
+  const o = opts||{};
+  const extraClass = o.clickable ? ' clickable'+(o.active?' active-filter':'') : '';
+  let dataAttr = '';
+  if(o.clickable && o.planName!=null) dataAttr += ` data-plan="${o.planName}"`;
+  if(o.clickable && o.statusName!=null) dataAttr += ` data-status="${o.statusName}"`;
+  return `<div class="card metric${extraClass}"${dataAttr}><div class="label">${label}</div><div class="val ${cls}">${val}${unit?'<span class="u">'+unit+'</span>':''}</div><div class="foot">${foot}</div>${barHtml}</div>`;
 }
 function sb(k,v){return `<div class="it">${k} <b>${v}</b></div>`;}
 
