@@ -93,6 +93,24 @@
   .lab-grid, .lab-card { transition: opacity 0.5s ease-in-out; }
   .summary-bar-wrap { transition: opacity 0.5s ease-in-out; }
   .summary-bar-wrap.fade-out { opacity: 0; }
+  /* Click-through session panel */
+  .lab-card { cursor: pointer; }
+  .lab-panel-overlay { position: fixed; inset: 0; background: rgba(3,5,10,0.78); z-index: 1000; display: flex; align-items: center; justify-content: center; }
+  .lab-panel { background: #0d1119; border: 1px solid #2d3148; border-radius: 12px; width: min(1100px, 92vw); max-height: 86vh; display: flex; flex-direction: column; box-shadow: 0 20px 60px rgba(0,0,0,0.6); }
+  .lab-panel-head { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid #2d3148; }
+  .lab-panel-title { font-size: 18px; font-weight: 700; color: #ffffff; letter-spacing: 0.4px; }
+  .lab-panel-stamp { font-size: 11px; color: #64748b; margin-top: 3px; letter-spacing: 0.3px; }
+  .lab-panel-close { background: #1e2433; color: #e2e8f0; border: 1px solid #2d3148; border-radius: 8px; padding: 7px 14px; font-size: 13px; font-weight: 600; cursor: pointer; letter-spacing: 0.4px; }
+  .lab-panel-close:hover { background: #2a3145; }
+  .lab-panel-body { overflow: auto; padding: 8px 20px 18px; }
+  .lab-panel-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  .lab-panel-table th { text-align: left; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.6px; font-size: 11px; font-weight: 600; padding: 10px 12px; border-bottom: 1px solid #2d3148; position: sticky; top: 0; background: #0d1119; }
+  .lab-panel-table th.num { text-align: right; }
+  .lab-panel-table td { color: #e2e8f0; padding: 9px 12px; border-bottom: 1px solid #1a1f2e; white-space: nowrap; }
+  .lab-panel-table td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .lab-panel-table td.img { max-width: 340px; overflow: hidden; text-overflow: ellipsis; }
+  .lab-panel-table tbody tr:hover { background: #141a26; }
+  .lab-panel-empty { color: #94a3b8; padding: 30px; text-align: center; font-size: 15px; }
 </style>
 </head>
 <body>
@@ -117,6 +135,19 @@
   </div>
 </div>
 
+<div id="labPanel" class="lab-panel-overlay" style="display:none;">
+  <div class="lab-panel">
+    <div class="lab-panel-head">
+      <div>
+        <div class="lab-panel-title" id="labPanelTitle"></div>
+        <div class="lab-panel-stamp" id="labPanelStamp"></div>
+      </div>
+      <button class="lab-panel-close" id="labPanelClose">✕ Clear</button>
+    </div>
+    <div class="lab-panel-body" id="labPanelBody"></div>
+  </div>
+</div>
+
 <script>
 const GITHUB_OWNER = 'technicalservices1';
 const GITHUB_REPO = 'SMARTCAST-LABS';
@@ -126,11 +157,18 @@ const LABS = ['LA', 'LV', 'CH', 'DAL', 'ENG', 'HAU', 'ATL', 'ORL'];
 // Rotation state — declared early so buildDashboard() can safely check it
 // on the very first render (before the rotation engine block runs).
 let rotationTimer = null;
+let rotationPaused = false;
+let latestFiltered = [];
+let panelOpenLab = null;
+let lastLoadTime = null;
 let rotationIndex = -1; // -1 = overview, 0..n = tile index in LABS
 const EXCLUDED = ['TEST', 'DC', 'PRODUCTIONSC'];
 
 // Branch shows ACTIVE if its most recent session finished within this many minutes (branch-local time).
 const ACTIVE_WINDOW_MIN = 60;
+
+// Number of most-recent sessions shown when a lab tile is clicked.
+const SESSION_LIST_COUNT = 10;
 
 // Per-branch IANA timezones for the local-time clock on each tile.
 // IANA ids handle daylight saving automatically.
@@ -351,7 +389,9 @@ function isLabActive(labRows, lab) {
 }
 
 function buildDashboard(data) {
+  lastLoadTime = new Date();
   const filtered = data.filter(r => !EXCLUDED.includes(getLocation(r['ServerName'] || '')));
+  latestFiltered = filtered;
 
   // Last entry timestamp — skip excluded servers and unparseable dates
   const lastRow = [...data].reverse().find(r => {
@@ -433,6 +473,7 @@ function buildDashboard(data) {
 
     const card = document.createElement('div');
     card.className = 'lab-card';
+    card.addEventListener('click', () => openLabPanel(lab));
     card.innerHTML = `
       <div class="lab-header">
         <div style="display:flex;align-items:baseline;gap:10px;min-width:0;">
@@ -575,6 +616,7 @@ async function loadData() {
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const text = await res.text();
     buildDashboard(parseCSV(text));
+    if (panelOpenLab) renderPanelContents(panelOpenLab);
   } catch(e) {
     document.getElementById('labGrid').innerHTML = `<div class="error">Error loading data: ${e.message}<br>Check the repo path and that the CSV is public.</div>`;
   }
@@ -668,6 +710,58 @@ function startRotation() {
 
 // Kick off the rotation once the first data render has had a moment to build cards.
 setTimeout(startRotation, 1500);
+
+function pauseRotation() { rotationPaused = true; clearTimeout(rotationTimer); }
+function resumeRotation() { if (rotationPaused) { rotationPaused = false; scheduleNext(); } }
+
+function renderPanelContents(lab) {
+  const N = SESSION_LIST_COUNT;
+  const valid = latestFiltered.filter(r => getLocation(r['ServerName'] || '') === lab && parseRowDate(r) !== null);
+  const recent = valid.slice(-N).reverse();
+  const mo = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const esc = s => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  let bodyHtml;
+  if (recent.length === 0) {
+    bodyHtml = `<div class="lab-panel-empty">No recent sessions on record for ${esc(lab)}.</div>`;
+  } else {
+    const trs = recent.map(r => {
+      const d = parseRowDate(r);
+      const when = d ? `${mo[d.getMonth()]} ${d.getDate()} · ${esc(r['StartTime'] || '')}` : esc(r['StartTime'] || '');
+      return `<tr><td>${when}</td><td>${esc(r['Model'])}</td><td class="img" title="${esc(r['ImageName'])}">${esc(r['ImageName'])}</td><td class="num">${esc(r['ClientCount'])}</td><td class="num">${esc(r['TotalTime'])}</td><td>${esc(r['ServerName'])}</td></tr>`;
+    }).join('');
+    bodyHtml = `<table class="lab-panel-table"><thead><tr><th>When Ran</th><th>Model</th><th>Image</th><th class="num">Clients</th><th class="num">Total Time</th><th>Server</th></tr></thead><tbody>${trs}</tbody></table>`;
+  }
+  document.getElementById('labPanelTitle').textContent = `${lab} — Last ${N} Sessions`;
+  document.getElementById('labPanelBody').innerHTML = bodyHtml;
+  const stampEl = document.getElementById('labPanelStamp');
+  if (stampEl) {
+    if (lastLoadTime) {
+      let h = lastLoadTime.getHours(); const ap = h >= 12 ? 'PM' : 'AM'; h = h % 12 || 12;
+      const m = String(lastLoadTime.getMinutes()).padStart(2,'0');
+      const s = String(lastLoadTime.getSeconds()).padStart(2,'0');
+      stampEl.textContent = `Data as of ${h}:${m}:${s} ${ap}`;
+    } else {
+      stampEl.textContent = '';
+    }
+  }
+}
+
+function openLabPanel(lab) {
+  panelOpenLab = lab;
+  renderPanelContents(lab);
+  document.getElementById('labPanel').style.display = 'flex';
+  pauseRotation();
+}
+
+function closeLabPanel() {
+  panelOpenLab = null;
+  document.getElementById('labPanel').style.display = 'none';
+  resumeRotation();
+}
+
+document.getElementById('labPanelClose').addEventListener('click', closeLabPanel);
+document.getElementById('labPanel').addEventListener('click', (e) => { if (e.target.id === 'labPanel') closeLabPanel(); });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeLabPanel(); });
 </script>
 </body>
 </html>
