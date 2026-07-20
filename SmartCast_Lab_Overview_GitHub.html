@@ -43,7 +43,38 @@
   .bottom-value.image { font-size: 11px; min-width: 0; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .server-row { margin-top: 8px; border-top: 1px solid #2d3148; padding-top: 8px; }
   .summary-bar { background: #1a1d27; border: 1px solid #2d3148; border-radius: 10px; padding: 12px 24px; display: flex; align-items: center; height: 75px; }
-  .summary-bar + .summary-bar { margin-top: 8px; }
+  .summary-bar + .summary-bar { margin-top: 0; }
+  .summary-bar-wrap { display: grid; grid-template-columns: 1fr minmax(340px, 26%); gap: 8px; align-items: stretch; }
+  .summary-stack { display: grid; grid-template-rows: repeat(3, 75px); gap: 8px; min-width: 0; }
+  .summary-side { grid-column: 2; background: #1a1d27; border: 1px solid #2d3148; border-radius: 10px;
+                  padding: 12px 18px; display: flex; flex-direction: column; min-width: 0; }
+  .side-hdr { display: flex; align-items: baseline; justify-content: space-between; }
+  .side-ttl { font-size: 11px; color: #e2e8f0; text-transform: uppercase; letter-spacing: .7px; font-weight: 600; }
+  .side-et { font-size: 10px; color: #94a3b8; text-transform: uppercase; letter-spacing: .6px; }
+  .side-stat { display: flex; align-items: baseline; gap: 9px; margin: 8px 0 12px; }
+  .side-big { font-size: 28px; font-weight: 600; color: #f59e0b; line-height: 1; }
+  .side-sub { font-size: 11px; color: #94a3b8; letter-spacing: .3px; }
+  .side-rows { flex: 1; display: flex; flex-direction: column; gap: 7px; min-height: 0; }
+  .side-row { flex: 1; display: flex; align-items: flex-end; gap: 10px; min-height: 0; }
+  .side-zl { width: 56px; font-size: 10px; color: #94a3b8; text-transform: uppercase; letter-spacing: .6px; text-align: right; line-height: 1; padding-bottom: 1px; }
+  .side-cols { flex: 1; align-self: stretch; display: flex; gap: 1px; align-items: flex-end; min-width: 0; }
+  .side-c { flex: 1; border-radius: 1px; }
+  .side-axis { display: flex; margin-left: 66px; margin-top: 6px; }
+  .side-axis span { flex: 1; font-size: 9px; color: #64748b; text-align: left; }
+  .summary-side { cursor: pointer; transition: border-color .2s ease; }
+  .summary-side:hover { border-color: #3d4358; }
+  .zone-block { padding: 15px 0; border-bottom: 1px solid #1a1f2e; }
+  .zone-block:last-child { border-bottom: none; }
+  .zone-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 10px; }
+  .zone-name { font-size: 15px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; }
+  .zone-labs { font-size: 11px; color: #64748b; letter-spacing: .4px; margin-top: 3px; }
+  .zone-stat { text-align: right; }
+  .zone-range { font-size: 21px; font-weight: 600; color: #f59e0b; line-height: 1; }
+  .zone-sub { font-size: 11px; color: #94a3b8; margin-top: 4px; }
+  .zone-chart { height: 74px; display: flex; gap: 2px; align-items: flex-end; }
+  .zc { flex: 1; border-radius: 2px; }
+  .zone-axis { display: flex; margin-top: 5px; }
+  .zone-axis span { flex: 1; font-size: 10px; color: #64748b; }
   .summary-divider { width: 1px; background: #2d3148; height: 40px; flex-shrink: 0; }
   .summary-block { text-align: center; flex: 1; padding: 0 12px; }
   .bar-label { flex: 0 0 140px; width: 140px; padding-right: 16px; margin-right: 4px; border-right: 1px solid #2d3148; }
@@ -129,9 +160,12 @@
     <div style="color:#6b7280;font-size:14px;padding:20px;">Loading data...</div>
   </div>
   <div class="summary-bar-wrap" style="margin-top:14px;">
-    <div class="summary-bar" id="summaryBar1"></div>
-    <div class="summary-bar" id="summaryBar2"></div>
-    <div class="summary-bar" id="summaryBar3"></div>
+    <div class="summary-stack">
+      <div class="summary-bar" id="summaryBar1"></div>
+      <div class="summary-bar" id="summaryBar2"></div>
+      <div class="summary-bar" id="summaryBar3"></div>
+    </div>
+    <div class="summary-side" id="summarySide"></div>
   </div>
 </div>
 
@@ -160,6 +194,7 @@ let rotationTimer = null;
 let rotationPaused = false;
 let latestFiltered = [];
 let panelOpenLab = null;
+let panelMode = null;   // 'lab' | 'zones'
 let lastLoadTime = null;
 let rotationIndex = -1; // -1 = overview, 0..n = tile index in LABS
 const EXCLUDED = ['TEST', 'DC', 'PRODUCTIONSC'];
@@ -392,6 +427,7 @@ function buildDashboard(data) {
   lastLoadTime = new Date();
   const filtered = data.filter(r => !EXCLUDED.includes(getLocation(r['ServerName'] || '')));
   latestFiltered = filtered;
+  buildPeakTile(filtered);
 
   // Last entry timestamp — skip excluded servers and unparseable dates
   const lastRow = [...data].reverse().find(r => {
@@ -616,7 +652,8 @@ async function loadData() {
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const text = await res.text();
     buildDashboard(parseCSV(text));
-    if (panelOpenLab) renderPanelContents(panelOpenLab);
+    if (panelMode === 'lab' && panelOpenLab) renderPanelContents(panelOpenLab);
+    else if (panelMode === 'zones') renderZonePanel();
   } catch(e) {
     document.getElementById('labGrid').innerHTML = `<div class="error">Error loading data: ${e.message}<br>Check the repo path and that the CSV is public.</div>`;
   }
@@ -709,6 +746,144 @@ function startRotation() {
 }
 
 // Kick off the rotation once the first data render has had a moment to build cards.
+
+const ZONE_OF = { LA:'Pacific', LV:'Pacific', CH:'Central', DAL:'Central', ENG:'Eastern', HAU:'Eastern', ATL:'Eastern', ORL:'Eastern' };
+// US zones all shift for DST together, so these offsets to Eastern hold year-round.
+const ZONE_OFFSET = { Pacific: -3, Central: -1, Eastern: 0 };
+const PEAK_START_HR = 7, PEAK_END_HR = 20;   // inclusive range shown on the strip
+const PEAK_WINDOW_DAYS = 30;                 // rolling window for the time-zone activity tile
+const PEAK_RANGE_THRESHOLD = 0.75;           // an hour joins the peak range if >= this share of the busiest hour
+
+function parseHour12(t) {
+  const m = /^(\d{1,2}):(\d{2})(?::\d{2})?\s*([AaPp])[Mm]$/.exec((t || '').trim());
+  if (!m) return null;
+  let h = parseInt(m[1], 10) % 12;
+  if (m[3].toLowerCase() === 'p') h += 12;
+  return h;
+}
+
+function buildPeakTile(rows) {
+  const el = document.getElementById('summarySide');
+  if (!el) return;
+  const zones = ['Pacific','Central','Eastern'];
+  const colors = { Pacific:'#60a5fa', Central:'#a78bfa', Eastern:'#34d399' };
+  const span = PEAK_END_HR - PEAK_START_HR + 1;
+  const byZone = {}; zones.forEach(z => byZone[z] = new Array(span).fill(0));
+  const total = new Array(span).fill(0);
+  rows.filter(r => isRecent(r, PEAK_WINDOW_DAYS)).forEach(r => {
+    const lab = getLocation(r['ServerName'] || '');
+    const z = ZONE_OF[lab]; if (!z) return;
+    const h = parseHour12(r['StartTime']); if (h === null) return;
+    const he = ((h - ZONE_OFFSET[z]) % 24 + 24) % 24;
+    const i = he - PEAK_START_HR;
+    if (i >= 0 && i < span) { byZone[z][i]++; total[i]++; }
+  });
+  const mx = Math.max(1, ...zones.flatMap(z => byZone[z]));
+  const grand = total.reduce((a,b) => a+b, 0);
+  const fmtH = h => `${h % 12 || 12}${h < 12 ? "AM" : "PM"}`;
+  // Peak range: longest run of hours at >= PEAK_RANGE_THRESHOLD of the busiest hour.
+  const peakVal = Math.max(...total);
+  let run = [], bestRun = [];
+  for (let i = 0; i < span; i++) {
+    if (total[i] >= PEAK_RANGE_THRESHOLD * peakVal) { run.push(i); if (run.length > bestRun.length) bestRun = run.slice(); }
+    else run = [];
+  }
+  const rangeTxt = bestRun.length
+    ? `${fmtH(PEAK_START_HR + bestRun[0])}\u2013${fmtH(PEAK_START_HR + bestRun[bestRun.length-1] + 1)}`
+    : '\u2014';
+  const rangeVol = bestRun.reduce((a,i) => a + total[i], 0);
+  const rangePct = grand ? Math.round(100 * rangeVol / grand) : 0;
+  const rowsHtml = zones.map(z => {
+    const cols = byZone[z].map(v => {
+      const hgt = v ? Math.max(7, Math.round(100 * v / mx)) : 3;
+      const op = v ? (0.35 + 0.65 * v / mx).toFixed(2) : 0.12;
+      return `<div class="side-c" style="height:${hgt}%;background:${colors[z]};opacity:${op}"></div>`;
+    }).join('');
+    return `<div class="side-row"><div class="side-zl">${z}</div><div class="side-cols">${cols}</div></div>`;
+  }).join('');
+  const ticks = [7,9,11,13,15,17,19].map(h => `<span>${h % 12 || 12}${h < 12 ? 'A' : 'P'}</span>`).join('');
+  el.innerHTML = `
+    <div class="side-hdr"><div class="side-ttl">Imaging Activity by Time Zone</div><div class="side-et">Last ${PEAK_WINDOW_DAYS} days &middot; all times ET</div></div>
+    <div class="side-stat"><div class="side-big">${rangeTxt}</div>
+      <div class="side-sub">busiest window &middot; ${rangePct}% of all imaging</div></div>
+    <div class="side-rows">${rowsHtml}</div>
+    <div class="side-axis">${ticks}</div>`;
+}
+
+function renderZonePanel() {
+  const zones = ['Pacific','Central','Eastern'];
+  const colors = { Pacific:'#60a5fa', Central:'#a78bfa', Eastern:'#34d399' };
+  const span = PEAK_END_HR - PEAK_START_HR + 1;
+  const byZone = {}, labsOf = {};
+  zones.forEach(z => { byZone[z] = new Array(span).fill(0); labsOf[z] = []; });
+  Object.keys(ZONE_OF).forEach(l => { if (labsOf[ZONE_OF[l]]) labsOf[ZONE_OF[l]].push(l); });
+  latestFiltered.filter(r => isRecent(r, PEAK_WINDOW_DAYS)).forEach(r => {
+    const lab = getLocation(r['ServerName'] || '');
+    const z = ZONE_OF[lab]; if (!z) return;
+    const h = parseHour12(r['StartTime']); if (h === null) return;   // LOCAL hour — no conversion
+    const i = h - PEAK_START_HR;
+    if (i >= 0 && i < span) byZone[z][i]++;
+  });
+  const fmtH = h => `${h % 12 || 12}${h < 12 ? 'AM' : 'PM'}`;
+  const ticks = [];
+  for (let h = PEAK_START_HR; h <= PEAK_END_HR; h++) {
+    ticks.push(`<span>${(h - PEAK_START_HR) % 2 === 0 ? (h % 12 || 12) + (h < 12 ? 'A' : 'P') : ''}</span>`);
+  }
+  const tickHtml = ticks.join('');
+  const blocks = zones.map(z => {
+    const arr = byZone[z];
+    const tot = arr.reduce((a,b) => a+b, 0);
+    const mx = Math.max(1, ...arr);
+    let run = [], best = [];
+    for (let i = 0; i < span; i++) {
+      if (arr[i] >= PEAK_RANGE_THRESHOLD * mx) { run.push(i); if (run.length > best.length) best = run.slice(); }
+      else run = [];
+    }
+    const rangeTxt = best.length ? `${fmtH(PEAK_START_HR+best[0])}\u2013${fmtH(PEAK_START_HR+best[best.length-1]+1)}` : '\u2014';
+    const pct = tot ? Math.round(100 * best.reduce((a,i) => a+arr[i], 0) / tot) : 0;
+    const cols = arr.map((v,i) => {
+      const hh = v ? Math.max(4, Math.round(100 * v / mx)) : 2;
+      const op = v ? (0.35 + 0.65 * v / mx).toFixed(2) : 0.12;
+      return `<div class="zc" style="height:${hh}%;background:${colors[z]};opacity:${op}" title="${fmtH(PEAK_START_HR+i)} \u2014 ${v} sessions"></div>`;
+    }).join('');
+    return `<div class="zone-block">
+      <div class="zone-head">
+        <div><div class="zone-name" style="color:${colors[z]}">${z}</div>
+             <div class="zone-labs">${labsOf[z].join(' \u00b7 ')}</div></div>
+        <div class="zone-stat"><div class="zone-range">${rangeTxt}</div>
+             <div class="zone-sub">busiest locally &middot; ${pct}% of ${tot} sessions</div></div>
+      </div>
+      <div class="zone-chart">${cols}</div>
+      <div class="zone-axis">${tickHtml}</div></div>`;
+  }).join('');
+  document.getElementById('labPanelTitle').textContent = `Busiest Hours by Time Zone \u2014 Local Time (Last ${PEAK_WINDOW_DAYS} Days)`;
+  document.getElementById('labPanelBody').innerHTML = blocks;
+  const st = document.getElementById('labPanelStamp');
+  if (st) {
+    if (lastLoadTime) {
+      let h = lastLoadTime.getHours(); const ap = h >= 12 ? 'PM' : 'AM'; h = h % 12 || 12;
+      const m = String(lastLoadTime.getMinutes()).padStart(2,'0');
+      const sec = String(lastLoadTime.getSeconds()).padStart(2,'0');
+      st.textContent = `Each zone shown in its own local time &middot; data as of ${h}:${m}:${sec} ${ap}`;
+      st.innerHTML = `Each zone shown in its own local time \u00b7 data as of ${h}:${m}:${sec} ${ap}`;
+    } else { st.textContent = ''; }
+  }
+}
+
+function openZonePanel() {
+  panelMode = 'zones';
+  panelOpenLab = null;
+  renderZonePanel();
+  document.getElementById('labPanel').style.display = 'flex';
+  pauseRotation();
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const side = document.getElementById('summarySide');
+  if (side) side.addEventListener('click', openZonePanel);
+});
+const _sideEl = document.getElementById('summarySide');
+if (_sideEl) _sideEl.addEventListener('click', openZonePanel);
 setTimeout(startRotation, 1500);
 
 function pauseRotation() { rotationPaused = true; clearTimeout(rotationTimer); }
@@ -747,6 +922,7 @@ function renderPanelContents(lab) {
 }
 
 function openLabPanel(lab) {
+  panelMode = 'lab';
   panelOpenLab = lab;
   renderPanelContents(lab);
   document.getElementById('labPanel').style.display = 'flex';
@@ -754,6 +930,7 @@ function openLabPanel(lab) {
 }
 
 function closeLabPanel() {
+  panelMode = null;
   panelOpenLab = null;
   document.getElementById('labPanel').style.display = 'none';
   resumeRotation();
