@@ -680,7 +680,7 @@ function updateClock() {
 updateClock();
 setInterval(updateClock, 1000);
 
-// Keep each tile's local-time clock current (updates the minute display every 15s).
+// Keep each tile's local-time clock current (re-reads the system clock every second).
 function updateLabClocks() {
   document.querySelectorAll('.lab-local-time').forEach(el => {
     const lab = el.getAttribute('data-lab');
@@ -693,7 +693,7 @@ setInterval(updateLabClocks, 1000);
 /* ---------- Rotation / spotlight engine ----------
    Sequence: full overview for OVERVIEW_MS, then each branch tile for TILE_MS,
    scaled up + centered, fading between slides. Loops forever.
-   Hover anywhere pauses; leaving resumes. Data keeps refreshing in the
+   Opening a detail panel pauses; closing it resumes. Data keeps refreshing in the
    background (setInterval(loadData,...)) independently of the rotation. */
 const OVERVIEW_MS = 55000;  // 55 seconds
 const TILE_MS = 20000;      // 20 seconds per tile
