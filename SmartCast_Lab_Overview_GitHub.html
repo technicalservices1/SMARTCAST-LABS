@@ -864,8 +864,7 @@ function renderZonePanel() {
       let h = lastLoadTime.getHours(); const ap = h >= 12 ? 'PM' : 'AM'; h = h % 12 || 12;
       const m = String(lastLoadTime.getMinutes()).padStart(2,'0');
       const sec = String(lastLoadTime.getSeconds()).padStart(2,'0');
-      st.textContent = `Each zone shown in its own local time &middot; data as of ${h}:${m}:${sec} ${ap}`;
-      st.innerHTML = `Each zone shown in its own local time \u00b7 data as of ${h}:${m}:${sec} ${ap}`;
+      st.innerHTML = `Imaging sessions only \u2014 excludes post-imaging work \u00b7 each zone in its own local time \u00b7 data as of ${h}:${m}:${sec} ${ap}`;
     } else { st.textContent = ''; }
   }
 }
