@@ -1,0 +1,11 @@
+BranchName,Date,Model,WindowsVersion,ProfileName,StartTime,FinishTime,TotalTime,Result
+DC,2026-07-22,HP EliteDesk 800 G4 SFF,Microsoft Windows 11 Pro 25H2,Test-Profile,3:57 PM,4:06 PM,00:09:00,Success
+DC,2026-07-22,HP EliteDesk 800 G4 SFF,Microsoft Windows 11 Pro 25H2,A-Test-Profile,10:49 PM,11:03 PM,00:13:58,Success
+DC,2026-07-23,HP EliteDesk 800 G4 SFF,Microsoft Windows 11 Pro 25H2,A-Test-Profile,3:50 PM,4:05 PM,00:14:50,SoftwareError
+DC,2026-07-23,HP EliteDesk 800 G4 SFF,Microsoft Windows 11 Pro 25H2,A-Test-Profile,5:04 PM,5:21 PM,00:16:40,Success
+DC,2026-07-23,HP EliteDesk 800 G4 SFF,Microsoft Windows 11 Pro 25H2,Default-Profile,6:14 PM,6:21 PM,00:06:32,Success
+DC,2026-07-23,HP EliteDesk 800 G4 SFF,Microsoft Windows 11 Pro 25H2,Default-Profile,6:59 PM,7:00 PM,00:01:26,Success
+DC,2026-07-23,HP EliteDesk 800 G4 SFF,Microsoft Windows 11 Pro 25H2,Default-Profile,7:51 PM,7:56 PM,00:05:25,Success
+DC,2026-07-23,HP EliteDesk 800 G4 SFF,Microsoft Windows 11 Pro 25H2,Default-Profile,8:08 PM,8:14 PM,00:05:17,Success
+DC,2026-07-23,HP EliteDesk 800 G4 SFF,Microsoft Windows 11 Pro 25H2,Default-Profile,8:42 PM,8:48 PM,00:05:16,Success
+DC,2026-07-23,HP EliteDesk 800 G4 SFF,Microsoft Windows 11 Pro 25H2,Default-Profile,8:57 PM,8:58 PM,00:01:25,Success
