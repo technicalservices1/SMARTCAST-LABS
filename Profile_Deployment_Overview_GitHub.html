@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Profile Deployment — Branch Overview</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #07090f; min-height: 100vh; padding: 16px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+  .monitor-frame { width: 117.6%; transform: scale(0.85); transform-origin: top left; background: #0f1117; border-radius: 12px; display: flex; flex-direction: column; padding: 20px; }
+  .dash-header { display: flex; align-items: center; margin-bottom: 18px; }
+  .dash-title { font-size: 24px; font-weight: 600; color: #ffffff; letter-spacing: 0.5px; }
+  .dash-since { font-size: 15px; font-weight: 400; color: #94a3b8; letter-spacing: 0.3px; }
+  .dash-subtitle { font-size: 11px; color: #60a5fa; text-transform: uppercase; letter-spacing: 0.8px; margin-top: 3px; }
+  .dash-subtitle span { color: #f59e0b; font-weight: 500; }
+  .clock-wrap { margin-left: auto; text-align: right; }
+  .clock-label { font-size: 10px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.8px; }
+  .clock-value { font-size: 16px; font-weight: 600; color: #ffffff; }
+
+  .lab-grid { display: grid; gap: 14px; flex: 1; min-height: 620px; }
+  .lab-card { background: #1a1d27; border: 1px solid #2d3148; border-radius: 10px; padding: 14px 18px; display: flex; flex-direction: column; min-height: 360px; cursor: pointer; }
+  .lab-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .lab-name { font-size: 17px; font-weight: 600; color: #e2e8f0; }
+  .lab-local { font-size: 14px; color: #f59e0b; letter-spacing: 0.4px; font-weight: 500; margin-left: 10px; }
+  .lab-tag { font-size: 11px; color: #e2e8f0; text-transform: uppercase; letter-spacing: 0.6px; }
+  .lab-status { display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.6px; white-space: nowrap; }
+  .lab-status .status-dot { width: 10px; height: 10px; border-radius: 50%; flex: 0 0 auto; }
+  .lab-status.active { color: #34d399; }
+  .lab-status.active .status-dot { background: #34d399; box-shadow: 0 0 6px #34d399; }
+  .lab-status.inactive { color: #ef4444; }
+  .lab-status.inactive .status-dot { background: #ef4444; box-shadow: 0 0 6px rgba(239,68,68,0.65); }
+  .lab-status .status-window { color: #64748b; font-weight: 500; font-size: 10px; }
+
+  .metric-row { display: flex; justify-content: flex-start; gap: 20px; margin-bottom: 8px; }
+  .metric-block { flex: 1 1 0; min-width: 0; max-width: 104px; }
+  .metric-label { font-size: 11px; color: #e2e8f0; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 2px; }
+  .metric-value { font-size: 28px; font-weight: 600; }
+  .metric-value.today { color: #34d399; }
+  .metric-value.week { color: #60a5fa; }
+  .metric-value.month { color: #a78bfa; }
+  .metric-value.year { color: #f472b6; }
+  .divider { border: none; border-top: 1px solid #2d3148; margin: 6px 0; }
+  .bottom-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 4px; }
+  .bottom-label { font-size: 11px; color: #e2e8f0; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 2px; }
+  .bottom-value { font-size: 13px; color: #f59e0b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 500; }
+  .bottom-value.profile { color: #60a5fa; }
+  .bottom-value.rate.good { color: #34d399; }
+  .bottom-value.rate.warn { color: #f59e0b; }
+  .bottom-value.rate.bad { color: #ef4444; }
+  .sec-row { margin-top: 8px; border-top: 1px solid #2d3148; padding-top: 8px; }
+  .empty-note { color: #64748b; font-size: 12px; margin-top: auto; margin-bottom: auto; text-align: center; }
+
+  .summary-bar-wrap { display: grid; grid-template-columns: 1fr minmax(340px, 26%); gap: 8px; align-items: stretch; margin-top: 14px; }
+  .summary-stack { display: grid; grid-template-rows: repeat(3, 75px); gap: 8px; min-width: 0; }
+  .summary-bar { background: #1a1d27; border: 1px solid #2d3148; border-radius: 10px; padding: 12px 24px; display: flex; align-items: center; height: 75px; }
+  .summary-title { font-size: 12px; font-weight: 700; color: #e2e8f0; text-transform: uppercase; letter-spacing: 0.8px; width: 190px; flex: 0 0 190px; }
+  .summary-block { flex: 1 1 0; min-width: 0; text-align: center; border-left: 1px solid #2d3148; padding: 0 12px; }
+  .summary-label { font-size: 11px; color: #e2e8f0; text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 3px; }
+  .summary-value { font-size: 26px; font-weight: 600; color: #f59e0b; }
+  .summary-value.text { font-size: 15px; }
+  .summary-value.green { color: #34d399; }
+
+  .summary-side { grid-column: 2; background: #1a1d27; border: 1px solid #2d3148; border-radius: 10px; padding: 12px 18px; display: flex; flex-direction: column; min-width: 0; cursor: pointer; transition: border-color .2s ease; }
+  .summary-side:hover { border-color: #3d4358; }
+  .side-hdr { display: flex; align-items: baseline; justify-content: space-between; }
+  .side-ttl { font-size: 11px; color: #e2e8f0; text-transform: uppercase; letter-spacing: .7px; font-weight: 600; }
+  .side-et { font-size: 10px; color: #94a3b8; text-transform: uppercase; letter-spacing: .6px; }
+  .side-stat { display: flex; align-items: baseline; gap: 9px; margin: 8px 0 10px; }
+  .side-big { font-size: 26px; font-weight: 600; color: #f59e0b; line-height: 1; }
+  .side-sub { font-size: 11px; color: #94a3b8; letter-spacing: .3px; }
+  .mix-rows { flex: 1; display: flex; flex-direction: column; gap: 8px; min-height: 0; justify-content: center; }
+  .mix-row { display: flex; align-items: center; gap: 9px; }
+  .mix-name { width: 96px; flex: 0 0 96px; font-size: 10px; color: #94a3b8; text-transform: uppercase; letter-spacing: .5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: right; }
+  .mix-track { flex: 1; height: 15px; background: #12151d; border-radius: 3px; min-width: 0; }
+  .mix-fill { height: 15px; border-radius: 3px; }
+  .mix-pct { width: 40px; flex: 0 0 40px; font-size: 11px; color: #e2e8f0; font-weight: 600; }
+
+  .panel-overlay { position: fixed; inset: 0; background: rgba(3,5,10,0.78); z-index: 1000; display: flex; align-items: center; justify-content: center; }
+  .panel { background: #0d1119; border: 1px solid #2d3148; border-radius: 12px; width: min(1100px, 92vw); max-height: 86vh; display: flex; flex-direction: column; box-shadow: 0 20px 60px rgba(0,0,0,0.6); }
+  .panel-head { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid #2d3148; }
+  .panel-title { font-size: 18px; font-weight: 700; color: #fff; letter-spacing: .4px; }
+  .panel-stamp { font-size: 11px; color: #64748b; margin-top: 3px; letter-spacing: .3px; }
+  .panel-close { background: #1e2433; color: #e2e8f0; border: 1px solid #2d3148; border-radius: 8px; padding: 7px 14px; font-size: 13px; font-weight: 600; cursor: pointer; }
+  .panel-close:hover { background: #2a3145; }
+  .panel-body { overflow: auto; padding: 8px 20px 18px; }
+  .panel-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  .panel-table th { text-align: left; color: #94a3b8; text-transform: uppercase; letter-spacing: .6px; font-size: 11px; font-weight: 600; padding: 10px 12px; border-bottom: 1px solid #2d3148; position: sticky; top: 0; background: #0d1119; }
+  .panel-table th.num { text-align: right; }
+  .panel-table td { color: #e2e8f0; padding: 9px 12px; border-bottom: 1px solid #1a1f2e; white-space: nowrap; }
+  .panel-table td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .panel-table td.ok { color: #34d399; }
+  .panel-table td.err { color: #ef4444; }
+  .panel-table tbody tr:hover { background: #141a26; }
+  .panel-empty { color: #94a3b8; padding: 30px; text-align: center; font-size: 15px; }
+  .error { color: #ef4444; padding: 30px; font-size: 15px; }
+</style>
+</head>
+<body>
+
+<div class="monitor-frame" id="frame">
+  <div class="dash-header">
+    <div>
+      <div class="dash-title">Profile Deployment — Branch Overview<span class="dash-since" id="recordingSince"></span></div>
+      <div class="dash-subtitle">Most Recent Entry: <span id="lastEntryDisplay">--</span></div>
+    </div>
+    <div class="clock-wrap">
+      <div class="clock-label">Local Date &amp; Time</div>
+      <div class="clock-value" id="clock"></div>
+    </div>
+  </div>
+
+  <div class="lab-grid" id="branchGrid"><div class="error">Loading data...</div></div>
+
+  <div class="summary-bar-wrap">
+    <div class="summary-stack">
+      <div class="summary-bar" id="summaryBar1"></div>
+      <div class="summary-bar" id="summaryBar2"></div>
+      <div class="summary-bar" id="summaryBar3"></div>
+    </div>
+    <div class="summary-side" id="summarySide"></div>
+  </div>
+</div>
+
+<div id="detailPanel" class="panel-overlay" style="display:none;">
+  <div class="panel">
+    <div class="panel-head">
+      <div>
+        <div class="panel-title" id="panelTitle"></div>
+        <div class="panel-stamp" id="panelStamp"></div>
+      </div>
+      <button class="panel-close" id="panelClose">✕ Clear</button>
+    </div>
+    <div class="panel-body" id="panelBody"></div>
+  </div>
+</div>
+
+<script>
+const CSV_URL = 'https://raw.githubusercontent.com/technicalservices1/SMARTCAST-LABS/main/Customer%20Profile%20Log.csv';
+
+// Branch time zones. Unlisted branches fall back to Eastern.
+const BRANCH_TZ = {
+  LA: 'America/Los_Angeles', LV: 'America/Los_Angeles',
+  CH: 'America/Chicago',     DAL: 'America/Chicago',
+  ENG: 'America/New_York',   HAU: 'America/New_York',
+  ATL: 'America/New_York',   ORL: 'America/New_York',
+  DC:  'America/New_York'
+};
+const DEFAULT_TZ = 'America/New_York';
+
+// The eight production branches, in fixed order, so every tile exists from day one
+// and simply fills in as each location starts reporting.
+const BRANCHES = ['LA', 'LV', 'CH', 'DAL', 'ENG', 'HAU', 'ATL', 'ORL'];
+// Staging and non-production hosts never appear on the board.
+const EXCLUDED = ['TEST', 'DC', 'PRODUCTIONSC'];
+
+const ACTIVE_WINDOW_MIN = 60;   // branch is ACTIVE if a profile finished within this many minutes, branch-local
+const RUN_LIST_COUNT    = 30;   // rows shown when a branch tile is clicked
+const MIX_WINDOW_DAYS   = 30;   // rolling window for the profile-mix tile
+const MIX_TOP_N         = 4;    // profiles shown in the mix tile
+
+let latestRows = [];
+let lastLoadTime = null;
+let panelMode = null;
+let panelOpenBranch = null;
+
+function parseCSV(text) {
+  const lines = text.trim().split('\n');
+  const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+  return lines.slice(1).filter(l => l.trim()).map(line => {
+    const vals = line.split(',').map(v => v.trim().replace(/"/g, ''));
+    const obj = {};
+    headers.forEach((h, i) => obj[h] = vals[i] || '');
+    return obj;
+  });
+}
+
+// Dates arrive as ISO (2026-07-22); times as "3:57 PM".
+// Safari rejects "2026-07-22 3:57 PM", so build the Date from numeric parts.
+function buildDate(dateStr, timeStr) {
+  if (!dateStr) return null;
+  const dm = /^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(dateStr.trim());
+  if (!dm) return null;
+  let h = 0, mi = 0;
+  const tm = /^(\d{1,2}):(\d{2})(?::(\d{2}))?\s*([AaPp])[Mm]$/.exec((timeStr || '').trim());
+  if (tm) {
+    h = parseInt(tm[1], 10) % 12;
+    if (tm[4].toLowerCase() === 'p') h += 12;
+    mi = parseInt(tm[2], 10);
+  }
+  return new Date(+dm[1], +dm[2] - 1, +dm[3], h, mi, 0);
+}
+function rowStart(r)  { return buildDate(r['Date'], r['StartTime']); }
+function rowFinish(r) { return buildDate(r['Date'], r['FinishTime']); }
+
+function isRecent(row, days) {
+  const d = rowStart(row);
+  if (!d) return false;
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - days);
+  return d >= cutoff;
+}
+
+// "00:09:00" -> seconds
+function durSeconds(t) {
+  const m = /^(\d+):(\d{2}):(\d{2})$/.exec((t || '').trim());
+  return m ? (+m[1]) * 3600 + (+m[2]) * 60 + (+m[3]) : null;
+}
+function fmtDur(sec) {
+  if (sec == null) return '--';
+  const m = Math.floor(sec / 60), s = Math.round(sec % 60);
+  return m >= 60 ? `${Math.floor(m/60)}h ${m%60}m` : (m > 0 ? `${m} min` : `${s} sec`);
+}
+
+function tzFor(branch) { return BRANCH_TZ[branch] || DEFAULT_TZ; }
+
+function localTimeFor(branch) {
+  try {
+    return new Intl.DateTimeFormat('en-US', {
+      timeZone: tzFor(branch), hour: 'numeric', minute: '2-digit', second: '2-digit', hour12: true
+    }).format(new Date());
+  } catch (e) { return ''; }
+}
+
+function nowInTZ(tz) {
+  try {
+    const parts = new Intl.DateTimeFormat('en-US', {
+      timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit',
+      hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
+    }).formatToParts(new Date());
+    const g = t => parseInt(parts.find(p => p.type === t).value, 10);
+    let hh = g('hour'); if (hh === 24) hh = 0;
+    return new Date(g('year'), g('month') - 1, g('day'), hh, g('minute'), g('second'));
+  } catch (e) { return new Date(); }
+}
+
+// A branch is ACTIVE when its most recent profile finished within the window,
+// compared wall-clock to wall-clock in that branch's own time zone.
+function isBranchActive(rows, branch) {
+  const now = nowInTZ(tzFor(branch));
+  let latest = null;
+  rows.forEach(r => {
+    const d = rowFinish(r);
+    if (d && (!latest || d > latest)) latest = d;
+  });
+  if (!latest) return false;
+  const ageMin = (now - latest) / 60000;
+  return ageMin <= ACTIVE_WINDOW_MIN && ageMin >= -10;
+}
+
+function topValue(rows, field) {
+  const counts = {};
+  rows.forEach(r => { const k = r[field]; if (k) counts[k] = (counts[k] || 0) + 1; });
+  const top = Object.entries(counts).sort((a,b) => b[1]-a[1])[0];
+  return top ? top[0] : '--';
+}
+function successRate(rows) {
+  if (!rows.length) return null;
+  const ok = rows.filter(r => (r['Result'] || '').toLowerCase() === 'success').length;
+  return ok / rows.length;
+}
+function rateClass(v) { return v == null ? '' : (v >= 0.95 ? 'good' : (v >= 0.85 ? 'warn' : 'bad')); }
+function fmtPct(v) { return v == null ? '--' : Math.round(v * 100) + '%'; }
+const esc = s => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+function buildDashboard(rows) {
+  lastLoadTime = new Date();
+  rows = rows.filter(r => !EXCLUDED.includes((r['BranchName'] || '').toUpperCase()));
+  latestRows = rows;
+
+  // Recording-since: earliest parseable date on record.
+  let first = null, last = null, lastRow = null;
+  rows.forEach(r => {
+    const d = rowStart(r);
+    if (!d) return;
+    if (!first || d < first) first = d;
+    if (!last || d > last) { last = d; lastRow = r; }
+  });
+  const MO = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const sinceEl = document.getElementById('recordingSince');
+  sinceEl.textContent = first ? ` · Recording since ${MO[first.getMonth()]} ${first.getDate()}, ${first.getFullYear()}` : '';
+  const leEl = document.getElementById('lastEntryDisplay');
+  if (last && lastRow) {
+    const t = new Intl.DateTimeFormat('en-US', { weekday:'long', month:'long', day:'numeric', year:'numeric' }).format(last);
+    leEl.textContent = `${t} · ${lastRow['StartTime']} — ${lastRow['BranchName']}`;
+  }
+
+  const branches = BRANCHES;
+  const grid = document.getElementById('branchGrid');
+  // Fixed 4-wide so cards keep a consistent size; empty cells simply mean
+  // that location has not started reporting yet.
+  const cols = 4;
+  grid.style.gridTemplateColumns = `repeat(${cols}, minmax(0, 1fr))`;
+  grid.innerHTML = '';
+
+  branches.forEach(branch => {
+    const bRows   = rows.filter(r => r['BranchName'] === branch);
+    const today   = new Date(); today.setHours(0,0,0,0);
+    const rToday  = bRows.filter(r => { const d = rowStart(r); return d && d >= today; });
+    const r7      = bRows.filter(r => isRecent(r, 7));
+    const r30     = bRows.filter(r => isRecent(r, 30));
+    const r365    = bRows.filter(r => isRecent(r, 365));
+    const active  = isBranchActive(bRows, branch);
+    const durs    = r7.map(r => durSeconds(r['TotalTime'])).filter(v => v != null);
+    const avgDur  = durs.length ? durs.reduce((a,b) => a+b, 0) / durs.length : null;
+    const maxDur  = durs.length ? Math.max(...durs) : null;
+    const rate    = successRate(r7);
+
+    const card = document.createElement('div');
+    card.className = 'lab-card';
+    card.addEventListener('click', () => openBranchPanel(branch));
+    card.innerHTML = `
+      <div class="lab-header">
+        <div style="display:flex;align-items:baseline;">
+          <div class="lab-name">${esc(branch)}</div>
+          <div class="lab-local" data-branch="${esc(branch)}">${localTimeFor(branch)}</div>
+        </div>
+        <div class="lab-status ${active ? 'active' : 'inactive'}"><span class="status-dot"></span><span class="status-word">${active ? 'ACTIVE' : 'INACTIVE'}</span>${active ? `<span class="status-window">(last ${ACTIVE_WINDOW_MIN} min)</span>` : ''}</div>
+        <div class="lab-tag">Machines Profiled</div>
+      </div>
+      <div class="metric-row">
+        <div class="metric-block"><div class="metric-label">Today</div><div class="metric-value today">${rToday.length}</div></div>
+        <div class="metric-block"><div class="metric-label">Last 7 Days</div><div class="metric-value week">${r7.length}</div></div>
+        <div class="metric-block"><div class="metric-label">Last 30 Days</div><div class="metric-value month">${r30.length}</div></div>
+        <div class="metric-block"><div class="metric-label">Last 365 Days</div><div class="metric-value year">${r365.length}</div></div>
+      </div>
+      <hr class="divider">
+      <div class="bottom-row">
+        <div><div class="bottom-label">Most Used Profile (7D)</div><div class="bottom-value profile">${esc(topValue(r7,'ProfileName'))}</div></div>
+        <div><div class="bottom-label">Success Rate (7D)</div><div class="bottom-value rate ${rateClass(rate)}">${fmtPct(rate)}</div></div>
+      </div>
+      <div class="bottom-row sec-row">
+        <div><div class="bottom-label">Most Used Model (7D)</div><div class="bottom-value">${esc(topValue(r7,'Model'))}</div></div>
+        <div><div class="bottom-label">Windows Version (7D)</div><div class="bottom-value">${esc(topValue(r7,'WindowsVersion'))}</div></div>
+      </div>
+      <div class="bottom-row sec-row">
+        <div><div class="bottom-label">Avg Duration (7D)</div><div class="bottom-value">${fmtDur(avgDur)}</div></div>
+        <div><div class="bottom-label">Longest Run (7D)</div><div class="bottom-value">${fmtDur(maxDur)}</div></div>
+      </div>`;
+    grid.appendChild(card);
+  });
+
+  buildSummary(rows);
+  buildMixTile(rows);
+}
+
+function buildSummary(rows) {
+  const r7 = rows.filter(r => isRecent(r, 7));
+  const r30 = rows.filter(r => isRecent(r, 30));
+  const r365 = rows.filter(r => isRecent(r, 365));
+
+  const leader = set => {
+    const c = {};
+    set.forEach(r => { const b = r['BranchName']; if (b) c[b] = (c[b]||0)+1; });
+    const t = Object.entries(c).sort((a,b) => b[1]-a[1])[0];
+    return t ? t[0] : '--';
+  };
+
+  document.getElementById('summaryBar1').innerHTML = `
+    <div class="summary-title">All Branches Profiled</div>
+    <div class="summary-block"><div class="summary-label">Last 7 Days</div><div class="summary-value">${r7.length}</div></div>
+    <div class="summary-block"><div class="summary-label">Last 30 Days</div><div class="summary-value">${r30.length}</div></div>
+    <div class="summary-block"><div class="summary-label">Last 365 Days</div><div class="summary-value">${r365.length}</div></div>
+    <div class="summary-block"><div class="summary-label">Most Used Profile (To Date)</div><div class="summary-value text">${esc(topValue(rows,'ProfileName'))}</div></div>`;
+
+  document.getElementById('summaryBar2').innerHTML = `
+    <div class="summary-title">Branch Leaders</div>
+    <div class="summary-block"><div class="summary-label">Last 7 Days</div><div class="summary-value">${esc(leader(r7))}</div></div>
+    <div class="summary-block"><div class="summary-label">Last 30 Days</div><div class="summary-value">${esc(leader(r30))}</div></div>
+    <div class="summary-block"><div class="summary-label">Last 365 Days</div><div class="summary-value">${esc(leader(r365))}</div></div>
+    <div class="summary-block"><div class="summary-label">Most Used Model (To Date)</div><div class="summary-value text">${esc(topValue(rows,'Model'))}</div></div>`;
+
+  const allDur = rows.map(r => durSeconds(r['TotalTime'])).filter(v => v != null);
+  const avgAll = allDur.length ? allDur.reduce((a,b)=>a+b,0)/allDur.length : null;
+  document.getElementById('summaryBar3').innerHTML = `
+    <div class="summary-title">Success Rate</div>
+    <div class="summary-block"><div class="summary-label">Last 7 Days</div><div class="summary-value green">${fmtPct(successRate(r7))}</div></div>
+    <div class="summary-block"><div class="summary-label">Last 30 Days</div><div class="summary-value green">${fmtPct(successRate(r30))}</div></div>
+    <div class="summary-block"><div class="summary-label">Last 365 Days</div><div class="summary-value green">${fmtPct(successRate(r365))}</div></div>
+    <div class="summary-block"><div class="summary-label">Avg Duration (All-Time)</div><div class="summary-value text">${fmtDur(avgAll)}</div></div>`;
+}
+
+function buildMixTile(rows) {
+  const el = document.getElementById('summarySide');
+  const win = rows.filter(r => isRecent(r, MIX_WINDOW_DAYS));
+  const counts = {};
+  win.forEach(r => { const p = r['ProfileName']; if (p) counts[p] = (counts[p]||0)+1; });
+  const sorted = Object.entries(counts).sort((a,b) => b[1]-a[1]);
+  const total = win.length;
+  const palette = ['#60a5fa','#a78bfa','#34d399','#f472b6','#f59e0b'];
+  const top = sorted.slice(0, MIX_TOP_N);
+  const mx = top.length ? top[0][1] : 1;
+
+  const rowsHtml = top.map(([name, n], i) => {
+    const pct = total ? Math.round(100 * n / total) : 0;
+    const w = Math.max(4, Math.round(100 * n / mx));
+    return `<div class="mix-row">
+      <div class="mix-name" title="${esc(name)}">${esc(name)}</div>
+      <div class="mix-track"><div class="mix-fill" style="width:${w}%;background:${palette[i % palette.length]}"></div></div>
+      <div class="mix-pct">${pct}%</div>
+    </div>`;
+  }).join('');
+
+  el.innerHTML = `
+    <div class="side-hdr"><div class="side-ttl">Profile Mix</div><div class="side-et">Last ${MIX_WINDOW_DAYS} days</div></div>
+    <div class="side-stat"><div class="side-big">${sorted.length}</div>
+      <div class="side-sub">distinct profiles · ${total} run${total === 1 ? '' : 's'}</div></div>
+    <div class="mix-rows">${rowsHtml || '<div class="side-sub">No runs in window.</div>'}</div>`;
+}
+
+function renderBranchPanel(branch) {
+  const bRows = latestRows.filter(r => r['BranchName'] === branch && rowStart(r));
+  const recent = bRows.slice(-RUN_LIST_COUNT).reverse();
+  const MO = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  let body;
+  if (!recent.length) {
+    body = `<div class="panel-empty">No profile runs on record for ${esc(branch)}.</div>`;
+  } else {
+    const trs = recent.map(r => {
+      const d = rowStart(r);
+      const when = d ? `${MO[d.getMonth()]} ${d.getDate()} · ${esc(r['StartTime'])}` : esc(r['StartTime']);
+      const ok = (r['Result'] || '').toLowerCase() === 'success';
+      return `<tr><td>${when}</td><td>${esc(r['ProfileName'])}</td><td>${esc(r['Model'])}</td>` +
+             `<td>${esc(r['WindowsVersion'])}</td><td class="num">${esc(r['TotalTime'])}</td>` +
+             `<td class="${ok ? 'ok' : 'err'}">${esc(r['Result'])}</td></tr>`;
+    }).join('');
+    body = `<table class="panel-table"><thead><tr><th>When Ran</th><th>Profile</th><th>Model</th>` +
+           `<th>Windows</th><th class="num">Total Time</th><th>Result</th></tr></thead><tbody>${trs}</tbody></table>`;
+  }
+  document.getElementById('panelTitle').textContent = `${branch} — Last ${RUN_LIST_COUNT} Profile Runs`;
+  document.getElementById('panelBody').innerHTML = body;
+  setStamp('');
+}
+
+function renderMixPanel() {
+  const win = latestRows.filter(r => isRecent(r, MIX_WINDOW_DAYS));
+  const byProfile = {};
+  win.forEach(r => {
+    const p = r['ProfileName'] || '--';
+    if (!byProfile[p]) byProfile[p] = [];
+    byProfile[p].push(r);
+  });
+  const sorted = Object.entries(byProfile).sort((a,b) => b[1].length - a[1].length);
+  const total = win.length;
+  let body;
+  if (!sorted.length) {
+    body = `<div class="panel-empty">No profile runs in the last ${MIX_WINDOW_DAYS} days.</div>`;
+  } else {
+    const trs = sorted.map(([name, rs]) => {
+      const durs = rs.map(r => durSeconds(r['TotalTime'])).filter(v => v != null);
+      const avg = durs.length ? durs.reduce((a,b)=>a+b,0)/durs.length : null;
+      const rate = successRate(rs);
+      const branches = [...new Set(rs.map(r => r['BranchName']))].join(' · ');
+      const pct = total ? Math.round(100 * rs.length / total) : 0;
+      return `<tr><td>${esc(name)}</td><td class="num">${rs.length}</td><td class="num">${pct}%</td>` +
+             `<td class="num">${fmtDur(avg)}</td><td class="num">${fmtPct(rate)}</td><td>${esc(branches)}</td></tr>`;
+    }).join('');
+    body = `<table class="panel-table"><thead><tr><th>Profile</th><th class="num">Runs</th><th class="num">Share</th>` +
+           `<th class="num">Avg Duration</th><th class="num">Success</th><th>Branches</th></tr></thead><tbody>${trs}</tbody></table>`;
+  }
+  document.getElementById('panelTitle').textContent = `Profile Mix — Last ${MIX_WINDOW_DAYS} Days`;
+  document.getElementById('panelBody').innerHTML = body;
+  setStamp('One row per machine — profiles are never run on more than one machine at a time');
+}
+
+function setStamp(prefix) {
+  const st = document.getElementById('panelStamp');
+  if (!st) return;
+  if (!lastLoadTime) { st.textContent = ''; return; }
+  let h = lastLoadTime.getHours(); const ap = h >= 12 ? 'PM' : 'AM'; h = h % 12 || 12;
+  const m = String(lastLoadTime.getMinutes()).padStart(2,'0');
+  const s = String(lastLoadTime.getSeconds()).padStart(2,'0');
+  st.textContent = (prefix ? prefix + ' · ' : '') + `data as of ${h}:${m}:${s} ${ap}`;
+}
+
+function openBranchPanel(branch) {
+  panelMode = 'branch'; panelOpenBranch = branch;
+  renderBranchPanel(branch);
+  document.getElementById('detailPanel').style.display = 'flex';
+}
+function openMixPanel() {
+  panelMode = 'mix'; panelOpenBranch = null;
+  renderMixPanel();
+  document.getElementById('detailPanel').style.display = 'flex';
+}
+function closePanel() {
+  panelMode = null; panelOpenBranch = null;
+  document.getElementById('detailPanel').style.display = 'none';
+}
+
+document.getElementById('panelClose').addEventListener('click', closePanel);
+document.getElementById('detailPanel').addEventListener('click', e => { if (e.target.id === 'detailPanel') closePanel(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closePanel(); });
+document.getElementById('summarySide').addEventListener('click', openMixPanel);
+
+function updateClock() {
+  document.getElementById('clock').textContent = new Intl.DateTimeFormat('en-US', {
+    weekday:'long', month:'long', day:'numeric', year:'numeric',
+    hour:'numeric', minute:'2-digit', second:'2-digit', hour12:true
+  }).format(new Date()).replace(' at ', ' · ');
+}
+setInterval(updateClock, 1000); updateClock();
+
+// Keep each tile's local-time clock current (re-reads the system clock every second).
+function updateBranchClocks() {
+  document.querySelectorAll('.lab-local').forEach(el => {
+    const b = el.getAttribute('data-branch');
+    if (b) el.textContent = localTimeFor(b);
+  });
+}
+setInterval(updateBranchClocks, 1000);
+
+async function loadData() {
+  try {
+    const res = await fetch(CSV_URL);
+    const text = await res.text();
+    buildDashboard(parseCSV(text));
+    if (panelMode === 'branch' && panelOpenBranch) renderBranchPanel(panelOpenBranch);
+    else if (panelMode === 'mix') renderMixPanel();
+  } catch (e) {
+    document.getElementById('branchGrid').innerHTML =
+      `<div class="error">Error loading data: ${e.message}<br>Check the repo path and that the CSV is public.</div>`;
+  }
+}
+loadData();
+setInterval(loadData, 300000);
+</script>
+</body>
+</html>
