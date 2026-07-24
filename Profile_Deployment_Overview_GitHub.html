@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Profile Deployment — Branch Overview</title>
+<title>Profile Deployment — Lab Overview</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { background: #07090f; min-height: 100vh; padding: 16px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
@@ -100,7 +100,7 @@
 <div class="monitor-frame" id="frame">
   <div class="dash-header">
     <div>
-      <div class="dash-title">Profile Deployment — Branch Overview<span class="dash-since" id="recordingSince"></span></div>
+      <div class="dash-title">Profile Deployment — Lab Overview<span class="dash-since" id="recordingSince"></span></div>
       <div class="dash-subtitle">Most Recent Entry: <span id="lastEntryDisplay">--</span></div>
     </div>
     <div class="clock-wrap">
@@ -356,14 +356,14 @@ function buildSummary(rows) {
   };
 
   document.getElementById('summaryBar1').innerHTML = `
-    <div class="summary-title">All Branches Profiled</div>
+    <div class="summary-title">All Labs Profiled</div>
     <div class="summary-block"><div class="summary-label">Last 7 Days</div><div class="summary-value">${r7.length}</div></div>
     <div class="summary-block"><div class="summary-label">Last 30 Days</div><div class="summary-value">${r30.length}</div></div>
     <div class="summary-block"><div class="summary-label">Last 365 Days</div><div class="summary-value">${r365.length}</div></div>
     <div class="summary-block"><div class="summary-label">Most Used Profile (To Date)</div><div class="summary-value text">${esc(topValue(rows,'ProfileName'))}</div></div>`;
 
   document.getElementById('summaryBar2').innerHTML = `
-    <div class="summary-title">Branch Leaders</div>
+    <div class="summary-title">Lab Leaders</div>
     <div class="summary-block"><div class="summary-label">Last 7 Days</div><div class="summary-value">${esc(leader(r7))}</div></div>
     <div class="summary-block"><div class="summary-label">Last 30 Days</div><div class="summary-value">${esc(leader(r30))}</div></div>
     <div class="summary-block"><div class="summary-label">Last 365 Days</div><div class="summary-value">${esc(leader(r365))}</div></div>
@@ -455,7 +455,7 @@ function renderMixPanel() {
              `<td class="num">${fmtDur(avg)}</td><td class="num">${fmtPct(rate)}</td><td>${esc(branches)}</td></tr>`;
     }).join('');
     body = `<table class="panel-table"><thead><tr><th>Profile</th><th class="num">Runs</th><th class="num">Share</th>` +
-           `<th class="num">Avg Duration</th><th class="num">Success</th><th>Branches</th></tr></thead><tbody>${trs}</tbody></table>`;
+           `<th class="num">Avg Duration</th><th class="num">Success</th><th>Labs</th></tr></thead><tbody>${trs}</tbody></table>`;
   }
   document.getElementById('panelTitle').textContent = `Profile Mix — Last ${MIX_WINDOW_DAYS} Days`;
   document.getElementById('panelBody').innerHTML = body;
