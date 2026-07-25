@@ -1,2 +1,3 @@
 BranchName,Date,Model,WindowsVersion,ProfileName,StartTime,FinishTime,TotalTime,Result
 DC,2026-07-25,HP EliteDesk 800 G4 SFF,Microsoft Windows 11 Pro 25H2,Default-Profile,5:47 PM,5:49 PM,00:02:21,Success
+DC,2026-07-25,NUC12WSHi7,Microsoft Windows 11 Pro 25H2,Standard-Image,5:44 PM,6:03 PM,00:18:47,Success
