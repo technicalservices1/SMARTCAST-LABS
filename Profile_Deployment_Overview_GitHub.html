@@ -76,7 +76,7 @@
   .mix-pct { width: 40px; flex: 0 0 40px; font-size: 11px; color: #e2e8f0; font-weight: 600; }
 
   .panel-overlay { position: fixed; inset: 0; background: rgba(3,5,10,0.78); z-index: 1000; display: flex; align-items: center; justify-content: center; }
-  .panel { background: #0d1119; border: 1px solid #2d3148; border-radius: 12px; width: min(1100px, 92vw); max-height: 86vh; display: flex; flex-direction: column; box-shadow: 0 20px 60px rgba(0,0,0,0.6); }
+  .panel { background: #0d1119; border: 1px solid #2d3148; border-radius: 12px; width: min(1360px, 95vw); max-height: 86vh; display: flex; flex-direction: column; box-shadow: 0 20px 60px rgba(0,0,0,0.6); }
   .panel-head { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid #2d3148; }
   .panel-title { font-size: 18px; font-weight: 700; color: #fff; letter-spacing: .4px; }
   .panel-stamp { font-size: 11px; color: #64748b; margin-top: 3px; letter-spacing: .3px; }
@@ -91,6 +91,9 @@
   .panel-table td.ok { color: #34d399; }
   .panel-table td.err { color: #ef4444; }
   .panel-table tbody tr:hover { background: #141a26; }
+  .panel-table.mix td:nth-child(1), .panel-table.mix th:nth-child(1) { min-width: 240px; }
+  .panel-table.mix td:nth-child(6), .panel-table.mix th:nth-child(6) { min-width: 360px; padding-left: 18px; }
+  .panel-table.mix th:nth-child(6) { padding-left: 18px; }
   .panel-empty { color: #94a3b8; padding: 30px; text-align: center; font-size: 15px; }
   .error { color: #ef4444; padding: 30px; font-size: 15px; }
 </style>
@@ -462,12 +465,14 @@ function renderMixPanel() {
       const durs = rs.map(r => durSeconds(r['TotalTime'])).filter(v => v != null);
       const avg = durs.length ? durs.reduce((a,b)=>a+b,0)/durs.length : null;
       const rate = successRate(rs);
-      const branches = [...new Set(rs.map(r => r['BranchName']))].join(' · ');
+      const branches = [...new Set(rs.map(r => r['BranchName']))]
+        .sort((a, b) => (BRANCHES.indexOf(a) + 1 || 99) - (BRANCHES.indexOf(b) + 1 || 99))
+        .join(' · ');
       const pct = total ? Math.round(100 * rs.length / total) : 0;
       return `<tr><td>${esc(name)}</td><td class="num">${rs.length}</td><td class="num">${pct}%</td>` +
              `<td class="num">${fmtDur(avg)}</td><td class="num">${fmtPct(rate)}</td><td>${esc(branches)}</td></tr>`;
     }).join('');
-    body = `<table class="panel-table"><thead><tr><th>Profile</th><th class="num">Runs</th><th class="num">Share</th>` +
+    body = `<table class="panel-table mix"><thead><tr><th>Profile</th><th class="num">Runs</th><th class="num">Share</th>` +
            `<th class="num">Avg Duration</th><th class="num">Success</th><th>Labs</th></tr></thead><tbody>${trs}</tbody></table>`;
   }
   document.getElementById('panelTitle').textContent = `Profile Mix — Last ${MIX_WINDOW_DAYS} Days`;
