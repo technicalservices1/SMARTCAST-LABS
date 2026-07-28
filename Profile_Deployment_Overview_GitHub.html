@@ -228,6 +228,24 @@ function fmtDur(sec) {
 
 function tzFor(branch) { return BRANCH_TZ[branch] || DEFAULT_TZ; }
 
+// A row's Date+StartTime is wall-clock in that BRANCH's own zone. To rank rows
+// across zones we convert each to a true absolute instant (epoch ms) here, so
+// LA 3:45 PM (PT) correctly outranks HAU 4:03 PM (ET).
+function rowInstant(r) {
+  const d = rowStart(r);
+  if (!d) return null;
+  const tz = tzFor(r['BranchName']);
+  const guess = Date.UTC(d.getFullYear(), d.getMonth(), d.getDate(), d.getHours(), d.getMinutes(), 0);
+  try {
+    const parts = new Intl.DateTimeFormat('en-US', { timeZone: tz, year:'numeric', month:'2-digit',
+      day:'2-digit', hour:'2-digit', minute:'2-digit', second:'2-digit', hour12:false }).formatToParts(new Date(guess));
+    const g = t => parseInt(parts.find(p => p.type === t).value, 10);
+    let hh = g('hour'); if (hh === 24) hh = 0;
+    const asTz = Date.UTC(g('year'), g('month') - 1, g('day'), hh, g('minute'), g('second'));
+    return guess - (asTz - guess);   // shift the wall-clock by the zone's offset
+  } catch (e) { return guess; }
+}
+
 function localTimeFor(branch) {
   try {
     return new Intl.DateTimeFormat('en-US', {
@@ -284,19 +302,20 @@ function buildDashboard(rows) {
   latestRows = rows;
 
   // Recording-since: earliest parseable date on record.
-  let first = null, last = null, lastRow = null;
+  let firstInst = null, lastInst = null, lastRow = null, firstDate = null;
   rows.forEach(r => {
-    const d = rowStart(r);
-    if (!d) return;
-    if (!first || d < first) first = d;
-    if (!last || d > last) { last = d; lastRow = r; }
+    const inst = rowInstant(r);
+    if (inst == null) return;
+    if (firstInst == null || inst < firstInst) { firstInst = inst; firstDate = rowStart(r); }
+    if (lastInst == null || inst > lastInst) { lastInst = inst; lastRow = r; }
   });
   const MO = ['January','February','March','April','May','June','July','August','September','October','November','December'];
   const sinceEl = document.getElementById('recordingSince');
-  sinceEl.textContent = first ? ` · Recording since ${MO[first.getMonth()]} ${first.getDate()}, ${first.getFullYear()}` : '';
+  sinceEl.textContent = firstDate ? ` · Recording since ${MO[firstDate.getMonth()]} ${firstDate.getDate()}, ${firstDate.getFullYear()}` : '';
   const leEl = document.getElementById('lastEntryDisplay');
-  if (last && lastRow) {
-    const t = new Intl.DateTimeFormat('en-US', { weekday:'long', month:'long', day:'numeric', year:'numeric' }).format(last);
+  if (lastRow) {
+    const ld = rowStart(lastRow);
+    const t = new Intl.DateTimeFormat('en-US', { weekday:'long', month:'long', day:'numeric', year:'numeric' }).format(ld);
     leEl.textContent = `${t} · ${lastRow['StartTime']} — ${lastRow['BranchName']}`;
   }
 
