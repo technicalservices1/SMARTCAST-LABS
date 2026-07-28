@@ -153,6 +153,18 @@ const BRANCHES = ['LA', 'LV', 'CH', 'DAL', 'ENG', 'HAU', 'ATL', 'ORL'];
 // Staging and non-production hosts never appear on the board.
 const EXCLUDED = ['TEST', 'DC', 'PRODUCTIONSC'];
 
+// The profile log writes full location names; the board keys off short codes.
+// Normalize on load so every downstream comparison matches. Unmapped names pass
+// through unchanged (and simply won't match a tile until added here).
+const BRANCH_NAME_MAP = {
+  'los angeles': 'LA', 'las vegas': 'LV', 'chicago': 'CH', 'dallas': 'DAL',
+  'englewood': 'ENG', 'hauppauge': 'HAU', 'atlanta': 'ATL', 'orlando': 'ORL'
+};
+function normalizeBranch(name) {
+  const key = (name || '').trim().toLowerCase();
+  return BRANCH_NAME_MAP[key] || (name || '').trim();
+}
+
 const ACTIVE_WINDOW_MIN = 60;   // branch is ACTIVE if a profile finished within this many minutes, branch-local
 const RUN_LIST_COUNT    = 30;   // rows shown when a branch tile is clicked
 const MIX_WINDOW_DAYS   = 30;   // rolling window for the profile-mix tile
@@ -264,6 +276,7 @@ const esc = s => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'
 
 function buildDashboard(rows) {
   lastLoadTime = new Date();
+  rows.forEach(r => { r['BranchName'] = normalizeBranch(r['BranchName']); });
   rows = rows.filter(r => !EXCLUDED.includes((r['BranchName'] || '').toUpperCase()));
   latestRows = rows;
 
