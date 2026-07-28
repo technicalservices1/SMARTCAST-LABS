@@ -49,6 +49,31 @@
   .bottom-value.rate.bad { color: #ef4444; }
   .sec-row { margin-top: 8px; border-top: 1px solid #2d3148; padding-top: 8px; }
   .empty-note { color: #64748b; font-size: 12px; margin-top: auto; margin-bottom: auto; text-align: center; }
+  /* Rotation / spotlight: the active tile fills the grid region; summary bars stay. */
+  .monitor-frame.spotlight .lab-grid { display: block; }
+  .monitor-frame.spotlight .lab-card { display: none; }
+  .monitor-frame.spotlight .lab-card.spot-active {
+    display: flex; width: 100%; height: 100%; min-height: 0; padding: 32px 42px; justify-content: space-between;
+  }
+  .monitor-frame.spotlight .lab-card.spot-active .lab-name { font-size: 34px; }
+  .monitor-frame.spotlight .lab-card.spot-active .lab-local { font-size: 24px; }
+  .monitor-frame.spotlight .lab-card.spot-active .lab-tag { font-size: 18px; }
+  .monitor-frame.spotlight .lab-card.spot-active .lab-status { font-size: 18px; gap: 9px; }
+  .monitor-frame.spotlight .lab-card.spot-active .lab-status .status-dot { width: 16px; height: 16px; }
+  .monitor-frame.spotlight .lab-card.spot-active .lab-status .status-window { font-size: 15px; }
+  .monitor-frame.spotlight .lab-card.spot-active .metric-label { font-size: 18px; margin-bottom: 6px; }
+  .monitor-frame.spotlight .lab-card.spot-active .metric-value { font-size: 64px; }
+  .monitor-frame.spotlight .lab-card.spot-active .metric-row { justify-content: space-between; gap: 0; }
+  .monitor-frame.spotlight .lab-card.spot-active .metric-block { width: auto; flex: 1; min-width: 0; max-width: none; }
+  .monitor-frame.spotlight .lab-card.spot-active .bottom-label { font-size: 16px; margin-bottom: 4px; }
+  .monitor-frame.spotlight .lab-card.spot-active .bottom-value { font-size: 26px; }
+  .monitor-frame.spotlight .lab-card.spot-active .divider { margin: 14px 0; }
+  .monitor-frame.spotlight .lab-card.spot-active .bottom-row { margin-top: 6px; }
+  /* Fade layer */
+  .lab-grid.fade-out, .lab-card.fade-out { opacity: 0; }
+  .lab-grid, .lab-card { transition: opacity 0.5s ease-in-out; }
+  .summary-bar-wrap { transition: opacity 0.5s ease-in-out; }
+  .summary-bar-wrap.fade-out { opacity: 0; }
 
   .summary-bar-wrap { display: grid; grid-template-columns: 1fr minmax(340px, 26%); gap: 8px; align-items: stretch; margin-top: 14px; }
   .summary-stack { display: grid; grid-template-rows: repeat(3, 75px); gap: 8px; min-width: 0; }
@@ -177,6 +202,9 @@ let latestRows = [];
 let lastLoadTime = null;
 let panelMode = null;
 let panelOpenBranch = null;
+let rotationIndex = -1;
+let rotationTimer = null;
+let rotationPaused = false;
 
 function parseCSV(text) {
   const lines = text.trim().split('\n');
@@ -376,6 +404,7 @@ function buildDashboard(rows) {
 
   buildSummary(rows);
   buildMixTile(rows);
+  if (frameEl && document.getElementById('frame').classList.contains('spotlight')) reapplyStage();
 }
 
 function buildSummary(rows) {
@@ -510,17 +539,17 @@ function setStamp(prefix) {
 }
 
 function openBranchPanel(branch) {
-  panelMode = 'branch'; panelOpenBranch = branch;
+  panelMode = 'branch'; panelOpenBranch = branch; pauseRotation();
   renderBranchPanel(branch);
   document.getElementById('detailPanel').style.display = 'flex';
 }
 function openMixPanel() {
-  panelMode = 'mix'; panelOpenBranch = null;
+  panelMode = 'mix'; panelOpenBranch = null; pauseRotation();
   renderMixPanel();
   document.getElementById('detailPanel').style.display = 'flex';
 }
 function closePanel() {
-  panelMode = null; panelOpenBranch = null;
+  panelMode = null; panelOpenBranch = null; resumeRotation();
   document.getElementById('detailPanel').style.display = 'none';
 }
 
@@ -558,8 +587,60 @@ async function loadData() {
       `<div class="error">Error loading data: ${e.message}<br>Check the repo path and that the CSV is public.</div>`;
   }
 }
+/* ---------- Rotation / spotlight engine ----------
+   Full overview for OVERVIEW_MS, then each branch tile for TILE_MS, looping.
+   Opening a panel pauses; closing resumes. Data refresh runs independently. */
+const OVERVIEW_MS = 55000;
+const TILE_MS = 20000;
+const FADE_MS = 500;
+
+function frameEl() { return document.getElementById('frame'); }
+function gridEl() { return document.getElementById('branchGrid'); }
+
+function showOverview() {
+  frameEl().classList.remove('spotlight');
+  gridEl().querySelectorAll('.lab-card').forEach(c => c.classList.remove('spot-active'));
+}
+function showTile(i) {
+  frameEl().classList.add('spotlight');
+  const cards = gridEl().querySelectorAll('.lab-card');
+  cards.forEach(c => c.classList.remove('spot-active'));
+  if (cards[i]) cards[i].classList.add('spot-active');
+}
+function applyStage() {
+  const grid = gridEl();
+  grid.classList.add('fade-out');
+  setTimeout(() => {
+    if (rotationIndex < 0) showOverview();
+    else showTile(rotationIndex);
+    grid.classList.remove('fade-out');
+  }, FADE_MS);
+}
+function scheduleNext() {
+  clearTimeout(rotationTimer);
+  const dwell = (rotationIndex < 0) ? OVERVIEW_MS : TILE_MS;
+  rotationTimer = setTimeout(() => {
+    rotationIndex = (rotationIndex + 1 >= BRANCHES.length) ? -1 : rotationIndex + 1;
+    applyStage();
+    scheduleNext();
+  }, dwell);
+}
+function startRotation() { rotationIndex = -1; showOverview(); scheduleNext(); }
+function pauseRotation() { rotationPaused = true; clearTimeout(rotationTimer); }
+function resumeRotation() { if (rotationPaused) { rotationPaused = false; scheduleNext(); } }
+
+// After a data refresh, re-apply the current spotlight so the view doesn't jump.
+function reapplyStage() {
+  if (rotationIndex >= 0) {
+    const cards = gridEl().querySelectorAll('.lab-card');
+    cards.forEach(c => c.classList.remove('spot-active'));
+    if (cards[rotationIndex]) cards[rotationIndex].classList.add('spot-active');
+  }
+}
+
 loadData();
 setInterval(loadData, 300000);
+setTimeout(startRotation, 1500);
 </script>
 </body>
 </html>
