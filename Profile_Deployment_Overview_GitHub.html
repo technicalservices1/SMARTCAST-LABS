@@ -217,12 +217,17 @@ function parseCSV(text) {
   });
 }
 
-// Dates arrive as ISO (2026-07-22); times as "3:57 PM".
+// Dates arrive in two formats depending on the source row: ISO (2026-07-22)
+// and US M/D/YYYY (7/28/2026). Parse both. Times are "3:57 PM".
 // Safari rejects "2026-07-22 3:57 PM", so build the Date from numeric parts.
 function buildDate(dateStr, timeStr) {
   if (!dateStr) return null;
-  const dm = /^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(dateStr.trim());
-  if (!dm) return null;
+  let y, mo, d;
+  const iso = /^(\d{4})-(\d{1,2})-(\d{1,2})$/.exec(dateStr.trim());
+  const us  = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(dateStr.trim());
+  if (iso)      { y = +iso[1]; mo = +iso[2]; d = +iso[3]; }
+  else if (us)  { y = +us[3];  mo = +us[1];  d = +us[2];  }
+  else return null;
   let h = 0, mi = 0;
   const tm = /^(\d{1,2}):(\d{2})(?::(\d{2}))?\s*([AaPp])[Mm]$/.exec((timeStr || '').trim());
   if (tm) {
@@ -230,7 +235,7 @@ function buildDate(dateStr, timeStr) {
     if (tm[4].toLowerCase() === 'p') h += 12;
     mi = parseInt(tm[2], 10);
   }
-  return new Date(+dm[1], +dm[2] - 1, +dm[3], h, mi, 0);
+  return new Date(y, mo - 1, d, h, mi, 0);
 }
 function rowStart(r)  { return buildDate(r['Date'], r['StartTime']); }
 function rowFinish(r) { return buildDate(r['Date'], r['FinishTime']); }
