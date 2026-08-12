@@ -516,3 +516,11 @@ Atlanta,2026-08-12,Latitude 5450,Microsoft Windows 11 Enterprise 25H2,Kforce-STD
 Englewood,2026-08-12,NUC12WSH-B,Microsoft Windows 11 Pro 25H2,STANDARD-RMM,9:13 AM,9:51 AM,00:37:51,Success
 Orlando,2026-08-12,Dell Pro 14 PC14250,Microsoft Windows 11 Pro 25H2,Manpower-STD-ADMIN,9:58 AM,10:27 AM,00:28:17,Success
 Orlando,2026-08-12,Dell Pro 14 PC14250,Microsoft Windows 11 Pro 25H2,Default-Profile,11:02 AM,11:20 AM,00:17:26,Success
+Hauppauge,2026-08-12,Dell Pro 14 PC14250,Microsoft Windows 11 Pro 25H2,Manpower-STD-ADMIN,12:50 PM,1:06 PM,00:16:01,Success
+Englewood,2026-08-12,Latitude 5520,Microsoft Windows 11 Pro 25H2,Default-Profile,12:45 PM,1:10 PM,00:24:57,SoftwareError
+Englewood,2026-08-12,Latitude 5520,Microsoft Windows 11 Pro 25H2,Default-Profile,12:46 PM,1:11 PM,00:24:42,SoftwareError
+Englewood,2026-08-12,Latitude 5520,Microsoft Windows 11 Pro 25H2,Default-Profile,12:46 PM,1:11 PM,00:24:50,SoftwareError
+Englewood,2026-08-12,Latitude 5520,Microsoft Windows 11 Pro 25H2,Default-Profile,12:47 PM,1:12 PM,00:24:49,SoftwareError
+Englewood,2026-08-12,Latitude 5520,Microsoft Windows 11 Pro 25H2,Default-Profile,12:47 PM,1:13 PM,00:25:22,SoftwareError
+Englewood,2026-08-12,Latitude 5520,Microsoft Windows 11 Pro 25H2,Default-Profile,12:47 PM,1:13 PM,00:26:40,SoftwareError
+Los Angeles,2026-08-12,Latitude 5450,Microsoft Windows 11 Pro 25H2,Beacon-Hill-CHARTER-ADMIN,9:39 AM,10:20 AM,00:41:34,SoftwareError
