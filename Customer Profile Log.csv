@@ -512,3 +512,5 @@ Dallas,2026-08-11,Latitude 5440,Microsoft Windows 11 Pro 25H2,Manpower-STD-ADMIN
 DC,2026-08-11,HP EliteDesk 800 G4 SFF,Microsoft Windows 11 Pro 25H2,Default-Profile,7:43 PM,8:03 PM,00:20:18,Success
 Englewood,2026-08-10,ThinkPad E14,Microsoft Windows 11 Pro 25H2,STANDARD-RMM,2:25 PM,2:36 PM,00:11:14,Success
 Englewood,2026-08-10,ThinkPad E14,Microsoft Windows 11 Pro 25H2,STANDARD-RMM,2:25 PM,2:35 PM,00:10:14,Success
+Atlanta,2026-08-12,Latitude 5450,Microsoft Windows 11 Enterprise 25H2,Kforce-STD-ADMIN,9:13 AM,9:43 AM,00:30:06,SoftwareError
+Englewood,2026-08-12,NUC12WSH-B,Microsoft Windows 11 Pro 25H2,STANDARD-RMM,9:13 AM,9:51 AM,00:37:51,Success
