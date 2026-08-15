@@ -229,6 +229,7 @@ const ACTIVE_WINDOW_MIN = 60;
 
 // Number of most-recent sessions shown when a lab tile is clicked.
 const SESSION_LIST_COUNT = 30;
+const SESSION_WINDOW_DAYS = 30;   // panel shows sessions within this many days of now
 
 // Per-branch IANA timezones for the local-time clock on each tile.
 // IANA ids handle daylight saving automatically.
@@ -914,14 +915,17 @@ function pauseRotation() { rotationPaused = true; clearTimeout(rotationTimer); }
 function resumeRotation() { if (rotationPaused) { rotationPaused = false; scheduleNext(); } }
 
 function renderPanelContents(lab) {
-  const N = SESSION_LIST_COUNT;
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - SESSION_WINDOW_DAYS);
   const valid = latestFiltered.filter(r => getLocation(r['ServerName'] || '') === lab && parseRowDate(r) !== null);
-  const recent = valid.slice(-N).reverse();
+  // sessions within the last SESSION_WINDOW_DAYS days, most recent first
+  const recent = valid.filter(r => parseRowDate(r) >= cutoff)
+                      .sort((a, b) => parseRowDate(b) - parseRowDate(a));
   const mo = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   const esc = s => String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   let bodyHtml;
   if (recent.length === 0) {
-    bodyHtml = `<div class="lab-panel-empty">No recent sessions on record for ${esc(lab)}.</div>`;
+    bodyHtml = `<div class="lab-panel-empty">No sessions in the last ${SESSION_WINDOW_DAYS} days for ${esc(lab)}.</div>`;
   } else {
     const trs = recent.map(r => {
       const d = parseRowDate(r);
@@ -930,7 +934,7 @@ function renderPanelContents(lab) {
     }).join('');
     bodyHtml = `<table class="lab-panel-table"><thead><tr><th>When Ran</th><th>Model</th><th>Image</th><th class="num">Clients</th><th class="num">Size</th><th class="num">Total Time</th><th>Server</th></tr></thead><tbody>${trs}</tbody></table>`;
   }
-  document.getElementById('labPanelTitle').textContent = `${lab} — Last ${N} Sessions`;
+  document.getElementById('labPanelTitle').textContent = `${lab} — Last ${SESSION_WINDOW_DAYS} Days`;
   document.getElementById('labPanelBody').innerHTML = bodyHtml;
   const stampEl = document.getElementById('labPanelStamp');
   if (stampEl) {
@@ -1630,16 +1634,11 @@ setTimeout(startRotation, 1500);
     const winOf = v => (v==='imaging'?fImg:fPro).contentWindow;
     const other = v => v==='imaging'?'profiles':'imaging';
     const S = fn => { try { return fn(); } catch(e){ return undefined; } };
-
     function show(v){ view=v; const img=v==='imaging';
       fImg.classList.toggle('hidden',!img); fPro.classList.toggle('hidden',img);
       bImg.classList.toggle('active',img); bPro.classList.toggle('active',!img); }
-
-    // Restart a board's rotation fresh from overview (pause clears any timer first -> no double chain).
     function beginBoard(v){ const w=winOf(v); S(()=>w.pauseRotation&&w.pauseRotation()); S(()=>w.startRotation&&w.startRotation()); }
     function freezeBoard(v){ const w=winOf(v); S(()=>w.pauseRotation&&w.pauseRotation()); }
-
-    // Watch the ACTIVE board; flip only after it completes a full cycle (returns to overview after visiting tiles).
     function watchActive(){
       clearInterval(watcher); let left=false; const w=winOf(view);
       watcher=setInterval(()=>{
@@ -1659,11 +1658,9 @@ setTimeout(startRotation, 1500);
     function setAuto(on){ auto=on; autoEl.classList.toggle('off',!on);
       autoLabel.textContent=on?'Auto-rotating':'Auto off';
       if(on) startCoordination(); else clearInterval(watcher); }
-
     bImg.addEventListener('click',()=>{ setAuto(false); show('imaging'); beginBoard('imaging'); });
     bPro.addEventListener('click',()=>{ setAuto(false); show('profiles'); beginBoard('profiles'); });
     autoEl.addEventListener('click',()=> setAuto(!auto));
-
     let loaded=0;
     function onFrame(){ if(++loaded===2) setTimeout(()=>{ show('imaging'); startCoordination(); }, 2500); }
     fImg.addEventListener('load', onFrame); fPro.addEventListener('load', onFrame);
