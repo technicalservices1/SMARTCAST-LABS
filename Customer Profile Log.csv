@@ -660,3 +660,6 @@ Las Vegas,2026-08-18,Latitude 5520,Microsoft Windows 11 Pro 25H2,Default-Profile
 Las Vegas,2026-08-18,Latitude 5520,Microsoft Windows 11 Pro 25H2,Default-Profile,2:18 PM,2:49 PM,00:30:54,Success
 Los Angeles,2026-08-18,Dell Pro 14 Plus PB14250,Microsoft Windows 11 Pro 25H2,The-Select-Group-Microsoft-Secured,3:54 PM,4:38 PM,00:43:45,Success
 Orlando,2026-08-19,Dell Pro 14 PC14250,Microsoft Windows 11 Pro 25H2,Kforce-STD-ADMIN,8:56 AM,9:18 AM,00:22:43,Success
+Atlanta,2026-08-19,Latitude 5440,Microsoft Windows 11 Pro 25H2,The-Select-Group-STD-ADMIN,10:26 AM,11:04 AM,00:38:07,ActivationError
+Las Vegas,2026-08-19,Latitude 5520,Microsoft Windows 11 Pro 25H2,Default-Profile,8:08 AM,8:14 AM,00:05:38,Success
+Atlanta,2026-08-19,Latitude 5440,Microsoft Windows 11 Enterprise 25H2,Kforce-STD-ADMIN,10:27 AM,11:16 AM,00:48:46,Success
