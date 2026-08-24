@@ -41,6 +41,25 @@
   .filter-note button{margin-left:auto;background:none;border:1px solid rgba(245,158,11,.4);color:#f6d38a;border-radius:6px;padding:3px 10px;font-size:11.5px;cursor:pointer;font-weight:600}
   .filter-note button:hover{background:rgba(245,158,11,.15)}
 
+  .addon-panel{background:var(--panel2);border:1px solid rgba(245,158,11,.28);border-radius:12px;padding:14px 18px;margin-bottom:12px}
+  .ao-head{color:var(--amber);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px}
+  .ao-head .ao-sub{display:block;color:var(--mut);font-size:11.5px;font-weight:500;text-transform:none;letter-spacing:0;margin-top:3px}
+  .ao-row{display:flex;align-items:center;gap:14px;padding:7px 0;border-bottom:1px solid var(--line);font-size:13px}
+  .ao-row .ao-name{flex:1;color:var(--txt);font-weight:600}
+  .ao-row .ao-gb{color:var(--amber);font-weight:700;min-width:90px;text-align:right}
+  .ao-row .ao-date{color:var(--mut);font-size:11.5px;min-width:88px;text-align:right}
+  .ao-del{background:none;border:1px solid var(--line);color:var(--mut);border-radius:6px;padding:3px 10px;font-size:11px;cursor:pointer}
+  .ao-del:hover{border-color:var(--red);color:var(--red)}
+  .ao-empty{color:var(--mut);font-size:12.5px;padding:4px 0 8px}
+  .ao-form{display:flex;gap:10px;align-items:center;margin-top:11px;flex-wrap:wrap}
+  .ao-form input{background:var(--bg);border:1px solid var(--line);color:var(--txt);border-radius:8px;padding:7px 11px;font-size:13px;font-family:inherit}
+  .ao-lab{display:flex;flex-direction:column;gap:4px;color:var(--mut);font-size:10.5px;text-transform:uppercase;letter-spacing:.5px;font-weight:700}
+  .ao-lab:first-child{flex:1;min-width:180px}
+  .ao-form input#aoGb{width:150px}
+  .ao-form button{align-self:flex-end}
+  .ao-form button{background:rgba(245,158,11,.15);border:1px solid rgba(245,158,11,.4);color:var(--amber);border-radius:8px;padding:7px 18px;font-size:13px;font-weight:650;cursor:pointer;font-family:inherit}
+  .ao-form button:hover{background:rgba(245,158,11,.25)}
+  .ao-form .ao-total{color:var(--mut);font-size:12px;margin-left:auto}
   .sumbar{display:flex;flex-wrap:wrap;gap:26px;background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:10px 22px;margin-bottom:14px}
   .sumbar .it{font-size:12.5px;color:var(--mut)}
   .sumbar .it b{color:var(--txt);font-weight:650;font-size:13.5px}
@@ -100,6 +119,7 @@
   </header>
 
   <div class="hero" id="hero"></div>
+  <div class="addon-panel" id="addonPanel" style="display:none"></div>
   <div class="sumbar" id="sumbar"></div>
   <div class="filter-note" id="filterNote" style="display:none"></div>
 
@@ -171,6 +191,24 @@ const ECODE_MAP = {"KIT4M05413791FK5":"812842","KIT4M05413783PFQ":"812845","KIT4
 // when its current burn rate projects past the allowance by the end of the cycle.
 // 80% matches the warning threshold the SharePoint Data Calculator already uses.
 const WARN_PCT = 80;
+
+// Mid-cycle data purchases (e.g. a 5 TB add-on). Stored against the billing cycle
+// they were bought in, so they accumulate through the month and fall away on their
+// own once a new cycle starts - loadAddons returns nothing when the stored cycle
+// no longer matches the current one.
+const ADDON_KEY = 'ssr_starlink_addons_v1';
+function loadAddons(cycle){
+  try{
+    const raw = localStorage.getItem(ADDON_KEY); if(!raw) return [];
+    const o = JSON.parse(raw);
+    if(!o || o.cycle !== cycle) return [];        // previous cycle - drops off
+    return Array.isArray(o.items) ? o.items : [];
+  }catch(e){ return []; }                          // private mode / storage disabled
+}
+function saveAddons(cycle, items){
+  try{ localStorage.setItem(ADDON_KEY, JSON.stringify({cycle, items})); }catch(e){}
+}
+let addonPanelOpen = false;
 
 const MODELS = ['Gen 3','Mini'];
 
@@ -254,13 +292,23 @@ function render(data){
     'Data refreshed &nbsp;<span class="stamp">'+new Date().toLocaleString(undefined,{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})+'</span>';
 
   const idle=m.recs.length-m.active;
-  const poolPct = m.pool>0 ? m.total/m.pool*100 : 0;   // true figure, can exceed 100
-  const poolBar = Math.min(100, poolPct);              // bar width only — caps at full
+  const cycleKey = data.billingStart;
+  const addons = loadAddons(cycleKey);
+  const addonGB = addons.reduce((s,a)=>s+(Number(a.gb)||0),0);
+  const basePool = m.pool;
+  const pool = basePool + addonGB;                     // add-ons lift the pool
+  const poolPct = pool>0 ? m.total/pool*100 : 0;       // true figure, can exceed 100
+  const poolBar = Math.min(100, poolPct);              // bar width only - caps at full
   const poolCol = poolPct>100 ? 'var(--red)' : 'var(--green)';
 
   document.getElementById('hero').innerHTML = [
     heroCard('Total Data Consumed', (m.total/1000).toFixed(2), 'TB', 'amber', fmt(m.total,0)+' GB this cycle'),
-    heroCard('Data Pool', (m.pool/1000).toFixed(2), 'TB', 'green', fmt(m.pool,0)+' GB allotted &middot; <span style="color:'+poolCol+';font-weight:700">'+poolPct.toFixed(0)+'% used</span>', poolBar, poolCol),
+    heroCard('Data Pool', (pool/1000).toFixed(2), 'TB', 'green',
+      (addonGB>0
+        ? fmt(basePool,0)+' + <span style="color:var(--amber);font-weight:700">'+fmt(addonGB,0)+' add-on</span>'
+        : fmt(basePool,0)+' GB allotted')
+      +' &middot; <span style="color:'+poolCol+';font-weight:700">'+poolPct.toFixed(0)+'% used</span>',
+      poolBar, poolCol, {clickable:true, addon:true, active:addonPanelOpen}),
     heroCard('Active Kits', fmt(m.active), '', 'blue', 'of '+m.recs.length+' provisioned', null, null, {clickable:true, statusName:'active', active:activeStatusFilter==='active'}),
     heroCard('Idle Kits', fmt(idle), '', 'green', '0 GB used this cycle', null, null, {clickable:true, statusName:'idle', active:activeStatusFilter==='idle'}),
     heroCard('Gen 3 Performance', fmt(m.models['Gen 3'].n), 'kits', 'violet', fmt(m.models['Gen 3'].gb,0)+' GB this cycle', null, null, {clickable:true, modelName:'Gen 3', active:activeModelFilter==='Gen 3'}),
@@ -273,6 +321,7 @@ function render(data){
       const plan = el.getAttribute('data-plan');
       const status = el.getAttribute('data-status');
       const model = el.getAttribute('data-model');
+      if(el.getAttribute('data-addon')){ addonPanelOpen=!addonPanelOpen; render(data); return; }
       if(plan!=null){ activePlanFilter = (activePlanFilter===plan) ? null : plan; }
       if(status!=null){ activeStatusFilter = (activeStatusFilter===status) ? null : status; }
       if(model!=null){ activeModelFilter = (activeModelFilter===model) ? null : model; }
@@ -280,9 +329,54 @@ function render(data){
     });
   });
 
+  // add-on entry panel
+  const ap = document.getElementById('addonPanel');
+  if(addonPanelOpen){
+    ap.style.display='block';
+    const rows = addons.length
+      ? addons.map(a=>`<div class="ao-row"><span class="ao-name">${a.label}</span>
+           <span class="ao-gb">${fmt(a.gb,0)} GB</span>
+           <span class="ao-date">${a.added||''}</span>
+           <button class="ao-del" data-id="${a.id}">Remove</button></div>`).join('')
+      : '<div class="ao-empty">No add-ons recorded for this billing cycle.</div>';
+    ap.innerHTML = `
+      <div class="ao-head">Data pool add-ons &mdash; ${cycleKey} cycle
+        <span class="ao-sub">Entries apply for this cycle only and clear when the next one starts.</span></div>
+      ${rows}
+      <div class="ao-form">
+        <label class="ao-lab">Description
+          <input id="aoLabel" type="text" autocomplete="off" value="5 TB add on"></label>
+        <label class="ao-lab">Amount (GB)
+          <input id="aoGb" type="number" autocomplete="off" value="5000" min="1" step="any"></label>
+        <button id="aoAdd">Add</button>
+        <span class="ao-total" id="aoMsg">${addonGB>0?'Total added: '+fmt(addonGB,0)+' GB':''}</span>
+      </div>`;
+    const commit = ()=>{
+      const lbl=(document.getElementById('aoLabel').value||'').trim()||'Add-on';
+      const gb=parseFloat(document.getElementById('aoGb').value);
+      const msg=document.getElementById('aoMsg');
+      if(!isFinite(gb)||gb<=0){
+        msg.textContent='Enter a GB amount greater than zero.';
+        msg.style.color='var(--red)'; return;
+      }
+      const items=[...addons,{id:String(Date.now()),label:lbl,gb:gb,
+                              added:new Date().toISOString().slice(0,10)}];
+      saveAddons(cycleKey,items); render(data);
+    };
+    document.getElementById('aoAdd').addEventListener('click',commit);
+    ap.querySelectorAll('.ao-form input').forEach(i=>{
+      i.addEventListener('keydown',e=>{ if(e.key==='Enter') commit(); });
+      i.addEventListener('focus',()=>i.select());
+    });
+    ap.querySelectorAll('.ao-del').forEach(btn=>btn.addEventListener('click',()=>{
+      saveAddons(cycleKey, addons.filter(a=>a.id!==btn.getAttribute('data-id')));
+      render(data);
+    }));
+  } else { ap.style.display='none'; ap.innerHTML=''; }
+
   document.getElementById('sumbar').innerHTML =
     sb('Kits total',m.recs.length)+
-    sb('Data pool', tb(m.pool))+
+    sb('Data pool', tb(pool))+
     sb('Avg / active kit', m.active? tb(m.total/m.active):'\u2014')+
     sb('Peak kit', tb(m.top[0]?m.top[0].usage:0));
 
@@ -340,7 +434,7 @@ function render(data){
     <td class="num">${fmt(r.usage,1)}</td></tr>`).join('');
   document.getElementById('topWrap').innerHTML=`<table><thead><tr><th>#</th><th>Kit</th><th>ECODE</th><th>Client</th><th>Type</th><th>Plan</th><th>Usage</th><th>GB</th></tr></thead><tbody>${trows}</tbody></table>`;
 
-  document.getElementById('foot').innerHTML='Total '+tb(m.total)+' of '+tb(m.pool)+' pool &middot; '+m.recs.length+' kits';
+  document.getElementById('foot').innerHTML='Total '+tb(m.total)+' of '+tb(pool)+' pool &middot; '+m.recs.length+' kits';
 }
 function heroCard(label,val,unit,cls,foot,pct,col,opts){
   const barHtml = (pct!=null) ? `<div class="bar"><i style="width:${pct}%;background:${col}"></i></div>` : '';
@@ -350,6 +444,7 @@ function heroCard(label,val,unit,cls,foot,pct,col,opts){
   if(o.clickable && o.planName!=null) dataAttr += ` data-plan="${o.planName}"`;
   if(o.clickable && o.statusName!=null) dataAttr += ` data-status="${o.statusName}"`;
   if(o.clickable && o.modelName!=null) dataAttr += ` data-model="${o.modelName}"`;
+  if(o.clickable && o.addon) dataAttr += ` data-addon="1"`;
   return `<div class="card metric${extraClass}"${dataAttr}><div class="label">${label}</div><div class="val ${cls}">${val}${unit?'<span class="u">'+unit+'</span>':''}</div><div class="foot">${foot}</div>${barHtml}</div>`;
 }
 function sb(k,v){return `<div class="it">${k} <b>${v}</b></div>`;}
