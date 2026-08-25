@@ -13,7 +13,7 @@
   }
   *{box-sizing:border-box;margin:0;padding:0}
   body{background:var(--bg);color:var(--txt);font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;padding:18px 30px 24px;-webkit-font-smoothing:antialiased}
-  .wrap{max-width:1460px;margin:0 auto}
+  .wrap{max-width:1560px;margin:0 auto}
   header{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--line)}
   .title h1{font-size:23px;font-weight:700;letter-spacing:.2px}
   .title h1 .accent{color:var(--amber)}
@@ -81,7 +81,7 @@
   .scrollbox::-webkit-scrollbar-thumb:hover{background:#333a4d}
 
   table{width:100%;border-collapse:collapse;font-size:13px}
-  thead th{position:sticky;top:0;background:var(--panel);z-index:2;text-align:left;color:var(--mut);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.5px;padding:8px 10px;border-bottom:1px solid var(--line)}
+  thead th{position:sticky;top:0;background:var(--panel);z-index:2;text-align:left;color:var(--mut);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.5px;padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
   td{padding:9px 8px;border-bottom:1px solid var(--line)}
   tr:last-child td{border-bottom:none}
   tr:hover td{background:var(--panel2)}
@@ -162,7 +162,7 @@
       that one automatically. No manual URL updates needed even as
       the dumped filename changes every day.
    ============================================================ */
-const DATA_URL = null;   // e.g. ".../Starlink_Usage_Report.csv" (raw GitHub URL) — set this to skip auto-discovery entirely
+const DATA_URL = null;   // set to a raw GitHub URL to skip auto-discovery entirely
 
 const REPO = { owner:'technicalservices1', repo:'SMARTCAST-LABS', path:'', branch:'main' };
 
@@ -272,12 +272,9 @@ function compute(data){
   const models={};
   MODELS.forEach(k=>models[k]={n:0,gb:0});
   recs.forEach(r=>{(models[r.model]=models[r.model]||{n:0,gb:0}); models[r.model].n++; models[r.model].gb+=r.usage;});
-  const tiers={};
-  recs.forEach(r=>{const k=r.plan||'Other';(tiers[k]=tiers[k]||{n:0,gb:0}); tiers[k].n++; tiers[k].gb+=r.usage;});
-  return {recs,total,pool,active,over,watch,frac,top,tiers,models};
+  return {recs,total,pool,active,over,watch,frac,top,models};
 }
 
-let activePlanFilter = null;   // null = no filter, otherwise a plan name string like "50 GB"
 let activeStatusFilter = null; // null = no filter, otherwise 'active' or 'idle'
 let activeModelFilter = null;  // null = no filter, otherwise 'Gen 3' or 'Mini'
 
@@ -315,14 +312,12 @@ function render(data){
     heroCard('Mini', fmt(m.models['Mini'].n), 'kits', 'blue', fmt(m.models['Mini'].gb,0)+' GB this cycle', null, null, {clickable:true, modelName:'Mini', active:activeModelFilter==='Mini'})
   ].join('');
 
-  // wire up click handlers on the tier tiles just rendered
+  // wire up click handlers on the tiles just rendered
   document.querySelectorAll('#hero .card.clickable').forEach(el=>{
     el.addEventListener('click', ()=>{
-      const plan = el.getAttribute('data-plan');
       const status = el.getAttribute('data-status');
       const model = el.getAttribute('data-model');
       if(el.getAttribute('data-addon')){ addonPanelOpen=!addonPanelOpen; render(data); return; }
-      if(plan!=null){ activePlanFilter = (activePlanFilter===plan) ? null : plan; }
       if(status!=null){ activeStatusFilter = (activeStatusFilter===status) ? null : status; }
       if(model!=null){ activeModelFilter = (activeModelFilter===model) ? null : model; }
       render(data);
@@ -380,23 +375,21 @@ function render(data){
     sb('Avg / active kit', m.active? tb(m.total/m.active):'\u2014')+
     sb('Peak kit', tb(m.top[0]?m.top[0].usage:0));
 
-  // filter note banner — combines plan + status filters when both are active
+  // filter note banner — combines status + model filters when both are active
   const fn = document.getElementById('filterNote');
-  if(activePlanFilter || activeStatusFilter || activeModelFilter){
+  if(activeStatusFilter || activeModelFilter){
     const parts = [];
     if(activeStatusFilter) parts.push(activeStatusFilter==='active' ? 'Active' : 'Idle');
     if(activeModelFilter) parts.push(activeModelFilter);
-    if(activePlanFilter) parts.push(activePlanFilter);
     fn.style.display='flex';
     fn.innerHTML = `<span>Showing only <b>${parts.join(' \u00b7 ')}</b> kits</span><button id="clearFilterBtn">Clear filter</button>`;
-    document.getElementById('clearFilterBtn').addEventListener('click', ()=>{ activePlanFilter=null; activeStatusFilter=null; activeModelFilter=null; render(data); });
+    document.getElementById('clearFilterBtn').addEventListener('click', ()=>{ activeStatusFilter=null; activeModelFilter=null; render(data); });
   } else {
     fn.style.display='none';
     fn.innerHTML='';
   }
 
   const matchesFilters = r =>
-    (!activePlanFilter || r.plan===activePlanFilter) &&
     (!activeStatusFilter || (activeStatusFilter==='active' ? r.usage>0 : r.usage===0)) &&
     (!activeModelFilter || r.model===activeModelFilter);
 
@@ -407,7 +400,7 @@ function render(data){
   document.getElementById('overCnt').textContent =
     nOver+' over \u00b7 '+(overFiltered.length-nOver)+' approaching';
   const ow=document.getElementById('overWrap');
-  if(!overFiltered.length){ ow.innerHTML='<div class="empty">No kits over or approaching their allowance'+((activePlanFilter||activeStatusFilter||activeModelFilter)?' match this filter':'')+' this cycle.</div>'; }
+  if(!overFiltered.length){ ow.innerHTML='<div class="empty">No kits over or approaching their allowance'+((activeStatusFilter||activeModelFilter)?' match this filter':'')+' this cycle.</div>'; }
   else{
     let rows=overFiltered.map(r=>`<tr>
       <td class="kit">${r.kit}</td>
@@ -418,7 +411,7 @@ function render(data){
       <td class="num">${fmt(r.usage,1)}</td>
       <td class="num ${r.state==='over'?'over':'near'}">${r.pct.toFixed(0)}%</td>
       <td><span class="pill ${r.state==='over'?'pover':'pnear'}">${r.state==='over'?'Over +'+fmt(r.overBy,1):'Approaching'}</span></td></tr>`).join('');
-    ow.innerHTML=`<table><thead><tr><th>Kit</th><th>ECODE</th><th>Client</th><th>Type</th><th>Allowance (GB)</th><th>Used (GB)</th><th>% Used</th><th>Status</th></tr></thead><tbody>${rows}</tbody></table>`;
+    ow.innerHTML=`<table><thead><tr><th>Kit</th><th>ECODE</th><th>Client</th><th>Type</th><th>Allowance</th><th>Used</th><th>% Used</th><th>Status</th></tr></thead><tbody>${rows}</tbody></table>`;
   }
 
   document.getElementById('topCnt').textContent = topFiltered.length+' kits';
@@ -441,7 +434,6 @@ function heroCard(label,val,unit,cls,foot,pct,col,opts){
   const o = opts||{};
   const extraClass = o.clickable ? ' clickable'+(o.active?' active-filter':'') : '';
   let dataAttr = '';
-  if(o.clickable && o.planName!=null) dataAttr += ` data-plan="${o.planName}"`;
   if(o.clickable && o.statusName!=null) dataAttr += ` data-status="${o.statusName}"`;
   if(o.clickable && o.modelName!=null) dataAttr += ` data-model="${o.modelName}"`;
   if(o.clickable && o.addon) dataAttr += ` data-addon="1"`;
