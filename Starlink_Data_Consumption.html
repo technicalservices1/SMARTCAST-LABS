@@ -21,6 +21,7 @@
   .meta{text-align:right;font-size:12.5px;color:var(--mut);line-height:1.7}
   .meta b{color:var(--blue);font-weight:600}
   .meta .stamp{color:var(--amber);font-weight:600}
+  .meta .stamp.stale{color:var(--red)}
 
   .hero{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:14px;margin-bottom:12px}
   @media(max-width:1180px){.hero{grid-template-columns:repeat(3,1fr)}}
@@ -219,6 +220,27 @@ function saveAddons(cycle, items){
 }
 let addonPanelOpen = false;
 
+// When the usage file was last committed to the repo. This is what "Data refreshed"
+// should report - the age of the data, not the moment the page happened to load.
+// null means we could not reach GitHub and are showing the embedded snapshot.
+let DATA_STAMP = null;
+const STALE_HOURS = 12;          // past this the stamp turns red
+
+function stampHtml(){
+  if(DATA_STAMP==null){
+    return '<span class="stamp stale">embedded snapshot &mdash; live data not loaded</span>';
+  }
+  const d=new Date(DATA_STAMP);
+  const hrs=(Date.now()-DATA_STAMP)/36e5;
+  const age = hrs<1  ? Math.max(1,Math.round(hrs*60))+'m ago'
+            : hrs<48 ? Math.round(hrs)+'h ago'
+            :          Math.round(hrs/24)+'d ago';
+  const cls = hrs>STALE_HOURS ? 'stamp stale' : 'stamp';
+  return '<span class="'+cls+'">'
+       + d.toLocaleString(undefined,{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})
+       + ' &middot; ' + age + '</span>';
+}
+
 const MODELS = ['Gen 3','Mini'];
 
 // Kit -> client, from the Orders tab of Sharepoint_NEW1.xlsx. Only kits with an
@@ -295,7 +317,7 @@ function render(data){
 
   document.getElementById('meta').innerHTML =
     'Billing cycle &nbsp;<b>'+cycle+'</b><br>'+
-    'Data refreshed &nbsp;<span class="stamp">'+new Date().toLocaleString(undefined,{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})+'</span>';
+    'Data refreshed &nbsp;'+stampHtml();
 
   const idle=m.recs.length-m.active;
   const cycleKey = data.billingStart;
@@ -478,13 +500,15 @@ async function discoverLatestFile(cfg){
   if(!Array.isArray(listing)) throw new Error('GitHub API did not return a directory listing');
   const candidates = listing.filter(f=>f.type==='file' && fileMatch.test(f.name));
   if(!candidates.length) throw new Error('No files in repo matched fileMatch pattern');
-  if(candidates.length===1) return candidates[0];
-  // multiple matches — ask GitHub which one was actually pushed most recently
+  // always ask GitHub when each candidate was pushed - with one match that gives us
+  // the data's age, with several it also tells us which is newest
   const withTimes = await Promise.all(candidates.map(async f=>({
     file:f, t: await lastCommitTime(owner,repo,branch,f.path||f.name)
   })));
   withTimes.sort((a,b)=>b.t-a.t);
-  return withTimes[0].file;
+  const best = withTimes[0];
+  if(isFinite(best.t)) best.file._committed = best.t;
+  return best.file;
 }
 
 // Reads the Orders tab into {kit: {client, allowance}}.
@@ -569,7 +593,9 @@ async function boot(){
     if(!url){
       const latest = await discoverLatestFile(DATA_DIR_AUTO);
       url = latest.download_url;
-      console.log('Auto-discovered latest usage file:', latest.name);
+      if(latest._committed) DATA_STAMP = latest._committed;
+      console.log('Auto-discovered latest usage file:', latest.name,
+                  DATA_STAMP ? '(committed '+new Date(DATA_STAMP).toLocaleString()+')' : '');
     }
     if(url.toLowerCase().endsWith('.xlsx')){
       const buf=await (await fetch(url,{cache:'no-store'})).arrayBuffer();
