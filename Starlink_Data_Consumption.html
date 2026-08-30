@@ -26,6 +26,9 @@
   @media(max-width:1180px){.hero{grid-template-columns:repeat(3,1fr)}}
   @media(max-width:640px){.hero{grid-template-columns:repeat(2,1fr)}}
   .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 18px}
+  .metric .subline{display:flex;justify-content:space-between;align-items:baseline;gap:10px;
+    color:var(--mut);font-size:11.5px;font-weight:600;margin:4px 0 -2px}
+  .metric .subline b{font-weight:700}
   .metric .label{color:var(--mut);font-size:11.5px;text-transform:uppercase;letter-spacing:.6px;font-weight:600}
   .metric .val{font-size:27px;font-weight:750;margin-top:6px;letter-spacing:-.5px}
   .metric .val.amber{color:var(--amber)} .metric .val.blue{color:var(--blue)}
@@ -315,7 +318,9 @@ function render(data){
         ? fmt(basePool,0)+' + <span style="color:var(--amber);font-weight:700">'+fmt(addonGB,0)+' add-on</span>'
         : fmt(basePool,0)+' GB allotted')
       +' &middot; <span style="color:'+poolCol+';font-weight:700">'+poolPct.toFixed(0)+'% used</span>',
-      poolBar, poolCol, {clickable:true, addon:true, active:addonPanelOpen}),
+      poolBar, poolCol, {clickable:true, addon:true, active:addonPanelOpen,
+        subline:'<span>Total</span><span>Remaining <b style="color:'+(pool-m.total>=0?'var(--green)':'var(--red)')+'">'
+                +tb(Math.abs(pool-m.total))+(pool-m.total<0?' over':'')+'</b></span>'}),
     heroCard('Active Kits', fmt(m.active), '', 'blue', 'of '+m.recs.length+' provisioned', null, null, {clickable:true, statusName:'active', active:activeStatusFilter==='active'}),
     heroCard('Idle Kits', fmt(idle), '', 'green', '0 GB used this cycle', null, null, {clickable:true, statusName:'idle', active:activeStatusFilter==='idle'}),
     heroCard('Gen 3 Performance', fmt(m.models['Gen 3'].n), 'kits', 'violet', fmt(m.models['Gen 3'].gb,0)+' GB this cycle', null, null, {clickable:true, modelName:'Gen 3', active:activeModelFilter==='Gen 3'}),
@@ -450,7 +455,8 @@ function heroCard(label,val,unit,cls,foot,pct,col,opts){
   if(o.clickable && o.statusName!=null) dataAttr += ` data-status="${o.statusName}"`;
   if(o.clickable && o.modelName!=null) dataAttr += ` data-model="${o.modelName}"`;
   if(o.clickable && o.addon) dataAttr += ` data-addon="1"`;
-  return `<div class="card metric${extraClass}"${dataAttr}><div class="label">${label}</div><div class="val ${cls}">${val}${unit?'<span class="u">'+unit+'</span>':''}</div><div class="foot">${foot}</div>${barHtml}</div>`;
+  const subHtml = o.subline ? `<div class="subline">${o.subline}</div>` : '';
+  return `<div class="card metric${extraClass}"${dataAttr}><div class="label">${label}</div>${subHtml}<div class="val ${cls}">${val}${unit?'<span class="u">'+unit+'</span>':''}</div><div class="foot">${foot}</div>${barHtml}</div>`;
 }
 function sb(k,v){return `<div class="it">${k} <b>${v}</b></div>`;}
 
