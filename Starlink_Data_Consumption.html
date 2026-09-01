@@ -202,6 +202,16 @@ const ECODE_MAP = {"KIT4M05413791FK5":"812842","KIT4M05413783PFQ":"812845","KIT4
 // 80% matches the warning threshold the SharePoint Data Calculator already uses.
 const WARN_PCT = 80;
 
+// Kits that appear in the Granite export but are not ours. They are dropped before
+// anything is counted, so they affect no total, no pool figure and no table.
+// Remove a kit from this list once Granite stops billing it - leaving it here after
+// that is harmless, but the list should reflect open disputes only.
+//   KIT4M05799715GJ2 - order CW6788658-1, QR-440007, account 021438012.
+//     Never delivered. Billed by Granite and carries no eCode. Raised with Granite.
+const EXCLUDE_KITS = new Set([
+  'KIT4M05799715GJ2'
+]);
+
 // Mid-cycle data purchases (e.g. a 5 TB add-on). Stored against the billing cycle
 // they were bought in, so they accumulate through the month and fall away on their
 // own once a new cycle starts - loadAddons returns nothing when the stored cycle
@@ -269,10 +279,13 @@ function compute(data){
   // De-duplicate by kit — the source export occasionally lists the same kit twice (a real
   // usage row plus a stray 0 GB phantom row). Keep whichever row has the higher usage.
   const byKit = new Map();
+  let excluded = 0;
   data.records.forEach(r=>{
+    if(EXCLUDE_KITS.has(String(r.kit||'').trim().toUpperCase())){ excluded++; return; }
     const existing = byKit.get(r.kit);
     if(!existing || r.usage > existing.usage) byKit.set(r.kit, r);
   });
+  if(excluded) console.log('Excluded '+excluded+' kit(s) listed in EXCLUDE_KITS');
   const recs = [...byKit.values()].map(r=>({...r, plan:'50 GB', planGB:50,
                  ecode:r.ecode||ECODE_MAP[r.kit]||'', model:modelOf(r.kit),
                  client:r.client||(orderOf(r.kit)||{}).client||clientOf(r.kit),
