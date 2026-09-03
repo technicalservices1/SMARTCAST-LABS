@@ -1395,3 +1395,6 @@ Dallas,2026-09-03,Latitude 5520,Microsoft Windows 11 Pro 25H2,STANDARD-RMM,11:36
 Dallas,2026-09-03,Latitude 5520,Microsoft Windows 11 Pro 25H2,STANDARD-RMM,11:36 AM,11:44 AM,00:07:53,Success
 Dallas,2026-09-03,Latitude 5520,Microsoft Windows 11 Pro 25H2,STANDARD-RMM,11:37 AM,11:44 AM,00:07:23,Success
 Dallas,2026-09-03,Latitude 5520,Microsoft Windows 11 Pro 25H2,STANDARD-RMM,11:37 AM,11:44 AM,00:07:07,Success
+Las Vegas,2026-09-03,Precision 3571,Microsoft Windows 11 Pro 25H2,LED-CONTENT-CONTROL,9:32 AM,10:06 AM,00:34:13,ActivationError
+Las Vegas,2026-09-03,Precision 3571,Microsoft Windows 11 Pro 25H2,LED-CONTENT-CONTROL,9:32 AM,10:06 AM,00:34:12,Success
+Los Angeles,2026-09-03,NUC12WSH-B,Microsoft Windows 11 Pro 25H2,Digital-Signage,9:34 AM,10:08 AM,00:33:47,Success
