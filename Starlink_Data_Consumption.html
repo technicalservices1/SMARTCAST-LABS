@@ -65,6 +65,51 @@
   .ao-form button{background:rgba(245,158,11,.15);border:1px solid rgba(245,158,11,.4);color:var(--amber);border-radius:8px;padding:7px 18px;font-size:13px;font-weight:650;cursor:pointer;font-family:inherit}
   .ao-form button:hover{background:rgba(245,158,11,.25)}
   .ao-form .ao-total{color:var(--mut);font-size:12px;margin-left:auto}
+  .pbtn{margin-left:auto;background:rgba(96,165,250,.12);border:1px solid rgba(96,165,250,.35);
+    color:var(--blue);border-radius:8px;padding:5px 14px;font-size:12px;font-weight:650;
+    cursor:pointer;font-family:inherit}
+  .pbtn:hover{background:rgba(96,165,250,.22)}
+  .printonly{display:none}
+
+  @media print{
+    /* paper is white: drop the dark theme rather than flooding the page with ink */
+    @page{size:letter portrait;margin:14mm}
+    html,body{background:#fff !important;color:#111 !important}
+    .wrap{max-width:none;padding:0}
+    header,.hero,.addon-panel,.sumbar,.filter-note,.cols,footer{display:none !important}
+    .printonly{display:block}
+    .printonly h2{font-size:18px;margin:0 0 2px;color:#1F3864}
+    .printonly .psub{font-size:10.5px;color:#555;margin-bottom:14px}
+    .printonly h3{font-size:12px;text-transform:uppercase;letter-spacing:.6px;
+      color:#1F3864;margin:16px 0 6px;border-bottom:1px solid #1F3864;padding-bottom:3px}
+    .printonly .pgrid{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+    .printonly .pgrid h3{margin-top:0}
+    .printonly table{width:100%;border-collapse:collapse;font-size:11px}
+    .printonly .pkv th{text-align:left;font-weight:500;color:#444;padding:3px 0;width:52%}
+    .printonly .pkv td{white-space:nowrap}
+    .printonly .pkv td{text-align:right;font-weight:700;padding:3px 0}
+    .printonly .pkv td.neg{color:#b00020}
+    .printonly .ptab th{text-align:left;color:#1F3864;padding:4px 6px;font-size:9.5px;
+      font-weight:700;text-transform:uppercase;letter-spacing:.4px;
+      border-bottom:1.5px solid #1F3864;border-top:1px solid #1F3864}
+    .printonly .ptab th.r{text-align:right}
+    /* repeat the header if a long table spans pages */
+    .printonly .ptab thead{display:table-header-group}
+    .printonly .ptab tr{page-break-inside:avoid}
+    .printonly .ptab td{padding:4px 6px;border-bottom:1px solid #ddd}
+    .printonly .r{text-align:right}
+    .printonly td.d{color:#777}
+    .printonly tr.tot td{font-weight:700;border-top:1px solid #1F3864;border-bottom:none}
+    /* the full device list starts on its own page */
+    .printonly h3.newpage{page-break-before:always}
+    .printonly .alldev{font-size:9.5px}
+    .printonly .alldev td{padding:2.5px 6px}
+    .printonly .alldev .n{color:#888;width:26px}
+
+    /* keep a heading with at least the first rows of its table */
+    .printonly h3{page-break-after:avoid}
+    .printonly .pkv{page-break-inside:avoid}
+  }
   .sumbar{display:flex;flex-wrap:wrap;gap:26px;background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:10px 22px;margin-bottom:14px}
   .sumbar .it{font-size:12.5px;color:var(--mut)}
   .sumbar .it b{color:var(--txt);font-weight:650;font-size:13.5px}
@@ -144,6 +189,9 @@
       <div class="scrollbox" id="topWrap"></div>
     </div>
   </div>
+
+  <!-- rendered only when printing; screen layout is untouched -->
+  <div class="printonly" id="printSummary"></div>
 
   <footer>
     <div>Starlink Data Consumption Dashboard &middot; SmartSource Rentals</div>
@@ -426,7 +474,9 @@ function render(data){
     sb('Kits total',m.recs.length)+
     sb('Data pool', tb(pool))+
     sb('Avg / active kit', m.active? tb(m.total/m.active):'\u2014')+
-    sb('Peak kit', tb(m.top[0]?m.top[0].usage:0));
+    sb('Peak kit', tb(m.top[0]?m.top[0].usage:0))+
+    '<button id="printBtn" class="pbtn" title="Print or save a one-page summary">Print summary</button>';
+  document.getElementById('printBtn').addEventListener('click',()=>window.print());
 
   // filter note banner — combines status + model filters when both are active
   const fn = document.getElementById('filterNote');
@@ -479,6 +529,80 @@ function render(data){
     <td style="width:16%"><div class="ubar"><i style="width:${Math.max(4,r.usage/max*100)}%"></i></div></td>
     <td class="num">${fmt(r.usage,1)}</td></tr>`).join('');
   document.getElementById('topWrap').innerHTML=`<table><thead><tr><th>#</th><th>Kit</th><th>ECODE</th><th>Client</th><th>Type</th><th>Plan</th><th>Usage</th><th>GB</th></tr></thead><tbody>${trows}</tbody></table>`;
+
+  // ---- month-end summary, only visible on paper -------------------------
+  const fmtGB = v => fmt(v,0)+' GB';
+  const row = (k,v,cls) => '<tr><th>'+k+'</th><td'+(cls?' class="'+cls+'"':'')+'>'+v+'</td></tr>';
+
+  const addonRows = addons.length
+    ? addons.map(a=>'<tr><td>'+a.label+'</td><td class="r">'+fmtGB(a.gb)+'</td><td class="d">'+(a.added||'')+'</td></tr>').join('')
+      + '<tr class="tot"><td>Total add-ons</td><td class="r">'+fmtGB(addonGB)+'</td><td></td></tr>'
+    : '<tr><td colspan="3" class="d">No add-ons recorded for this cycle.</td></tr>';
+
+  const modelRows = MODELS.map(k=>{
+      const v=m.models[k]||{n:0,gb:0};
+      return '<tr><td>'+k+'</td><td class="r">'+v.n+' kits</td><td class="r">'+fmtGB(v.gb)+'</td></tr>';
+    }).join('');
+
+  const allRows = m.top.map((r,i)=>'<tr><td class="n">'+(i+1)+'</td><td>'+r.kit+'</td><td>'
+      +(r.ecode||'')+'</td><td>'+(r.client||'Unassigned')+'</td><td>'+r.model+'</td><td class="r">'
+      +(r.allowance!=null?fmt(r.allowance,0):'\u2014')+'</td><td class="r">'+fmt(r.usage,1)+'</td></tr>').join('');
+
+  const nOverP = m.watch.filter(r=>r.state==='over').length;
+  const overRows = m.watch.length
+    ? m.watch.map(r=>'<tr><td>'+r.kit+'</td><td>'+(r.client||'Unassigned')+'</td><td class="r">'
+        +fmt(r.allowance,0)+'</td><td class="r">'+fmt(r.usage,1)+'</td><td class="r">'+r.pct.toFixed(0)+'%</td><td>'
+        +(r.state==='over'?'Over':'Approaching')+'</td></tr>').join('')
+    : '<tr><td colspan="6" class="d">No kits over or approaching their allowance.</td></tr>';
+
+  document.getElementById('printSummary').innerHTML = `
+    <h2>Starlink Data Consumption &mdash; cycle summary</h2>
+    <div class="psub">${data.billingStart} to ${data.billingEnd} &middot; SmartSource Rentals
+      &middot; printed ${new Date().toLocaleString(undefined,{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'})}</div>
+
+    <div class="pgrid">
+      <div>
+        <h3>Data pool</h3>
+        <table class="pkv">
+          ${row('Total data consumed', tb(m.total)+' ('+fmtGB(m.total)+')')}
+          ${row('Data pool', tb(pool)+' ('+fmtGB(pool)+')')}
+          ${row('Base allotment', fmtGB(basePool)+' ('+m.recs.length+' &times; 50)')}
+          ${row('Add-ons this cycle', fmtGB(addonGB))}
+          ${row('Used', poolPct.toFixed(1)+'%')}
+          ${row(pool-m.total>=0?'Remaining':'Over pool by',
+                tb(Math.abs(pool-m.total)), pool-m.total>=0?'':'neg')}
+        </table>
+      </div>
+      <div>
+        <h3>Fleet</h3>
+        <table class="pkv">
+          ${row('Kits billed', m.recs.length)}
+          ${row('Active this cycle', m.active)}
+          ${row('Idle this cycle', m.recs.length-m.active)}
+          ${row('Average per active kit', m.active? tb(m.total/m.active):'\u2014')}
+          ${row('Highest single kit', m.top[0]? tb(m.top[0].usage):'\u2014')}
+          ${row('&nbsp;&nbsp;kit', m.top[0]? m.top[0].kit:'\u2014')}
+          ${row('Over allowance', nOverP+' kits')}
+          ${row('Approaching allowance', (m.watch.length-nOverP)+' kits')}
+        </table>
+      </div>
+    </div>
+
+    <h3>Data pool add-ons</h3>
+    <table class="ptab"><thead><tr><th>Description</th><th class="r">Amount</th><th>Purchased</th></tr></thead>
+      <tbody>${addonRows}</tbody></table>
+
+    <h3>Usage by model</h3>
+    <table class="ptab"><thead><tr><th>Model</th><th class="r">Kits</th><th class="r">Usage</th></tr></thead>
+      <tbody>${modelRows}</tbody></table>
+
+    <h3>Overage watchlist</h3>
+    <table class="ptab"><thead><tr><th>Kit</th><th>Client</th><th class="r">Allowance</th><th class="r">Used</th><th class="r">%</th><th>Status</th></tr></thead>
+      <tbody>${overRows}</tbody></table>
+
+    <h3 class="newpage">All devices &mdash; ${m.recs.length} kits, highest usage first</h3>
+    <table class="ptab alldev"><thead><tr><th class="n">#</th><th>Kit</th><th>ECODE</th><th>Client</th><th>Type</th><th class="r">Allowance</th><th class="r">Used (GB)</th></tr></thead>
+      <tbody>${allRows}<tr class="tot"><td></td><td>Total &mdash; ${m.recs.length} kits</td><td></td><td></td><td></td><td></td><td class="r">${fmt(m.total,1)}</td></tr></tbody></table>`;
 
   document.getElementById('foot').innerHTML='Total '+tb(m.total)+' of '+tb(pool)+' pool &middot; '+m.recs.length+' kits';
 }
