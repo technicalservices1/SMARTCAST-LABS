@@ -2158,3 +2158,8 @@ Atlanta,2026-09-17,Precision 3571,Microsoft Windows 11 Enterprise 25H2,Kforce-ST
 Atlanta,2026-09-17,Precision 3571,Microsoft Windows 11 Enterprise 25H2,Kforce-STD-ADMIN,1:47 PM,2:09 PM,00:22:13,Success
 Los Angeles,2026-09-17,Surface Pro 9,Microsoft Windows 11 Pro 25H2,Kforce-STD-ADMIN,11:55 AM,12:11 PM,00:15:55,Success
 Los Angeles,2026-09-17,Latitude 5440,Microsoft Windows 11 Pro 25H2,Manpower-STD-ADMIN,11:47 AM,12:19 PM,00:31:55,Success
+Atlanta,2026-09-17,Latitude 5440,Microsoft Windows 11 Pro 25H2,Manpower-STD-ADMIN,3:59 PM,4:30 PM,00:30:52,SoftwareError
+Atlanta,2026-09-17,Latitude 5440,Microsoft Windows 11 Pro 25H2,Manpower-STD-ADMIN,4:01 PM,4:30 PM,00:29:30,SoftwareError
+Atlanta,2026-09-17,Latitude 5440,Microsoft Windows 11 Pro 25H2,Manpower-STD-ADMIN,4:00 PM,4:31 PM,00:31:02,SoftwareError
+Atlanta,2026-09-17,Latitude 5440,Microsoft Windows 11 Pro 25H2,Manpower-STD-ADMIN,4:01 PM,4:32 PM,00:30:37,SoftwareError
+Atlanta,2026-09-17,Latitude 5440,Microsoft Windows 11 Pro 25H2,Manpower-STD-ADMIN,4:02 PM,4:58 PM,00:56:17,SoftwareError
