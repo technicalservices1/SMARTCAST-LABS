@@ -2705,3 +2705,7 @@ Las Vegas,2026-09-22,Precision 3571,Microsoft Windows 11 Pro 25H2,MORGAN-STANLEY
 Las Vegas,2026-09-22,Latitude 5520,Microsoft Windows 11 Pro 25H2,MORGAN-STANLEY-ADMIN-V3,11:24 AM,11:46 AM,00:21:51,Success
 Las Vegas,2026-09-22,Latitude 5520,Microsoft Windows 11 Pro 25H2,MORGAN-STANLEY-ADMIN-V3,11:24 AM,11:47 AM,00:23:18,Success
 Las Vegas,2026-09-22,Latitude 5520,Microsoft Windows 11 Pro 25H2,MORGAN-STANLEY-ADMIN-V3,11:30 AM,11:50 AM,00:20:01,Success
+Englewood,2026-09-22,Precision 7560,Microsoft Windows 11 Pro 25H2,STANDARD-RMM,3:15 PM,3:33 PM,00:17:59,Success
+Dallas,2026-09-22,ThinkStation P330 Tiny,Microsoft Windows 11 Pro 25H2,STANDARD-RMM,2:40 PM,2:44 PM,00:04:44,SoftwareError
+Dallas,2026-09-22,ThinkStation P330 Tiny,Microsoft Windows 11 Pro 25H2,STANDARD-RMM,2:42 PM,2:46 PM,00:04:08,Success
+Englewood,2026-09-22,Precision 7560,Microsoft Windows 11 Pro 25H2,STANDARD-RMM,3:43 PM,3:49 PM,00:06:12,Success
