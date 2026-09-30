@@ -3226,3 +3226,6 @@ Las Vegas,2026-09-29,NUC12WSH-B,Microsoft Windows 11 Pro 25H2,STANDARD-RMM,6:10 
 Las Vegas,2026-09-29,NUC12WSH-B,Microsoft Windows 11 Pro 25H2,STANDARD-RMM,6:08 PM,6:21 PM,00:12:43,Success
 Las Vegas,2026-09-29,ThinkPad E14,Microsoft Windows 11 Pro 25H2,STANDARD-RMM,5:54 PM,6:23 PM,00:29:34,Success
 Las Vegas,2026-09-29,GE66 Raider 11UG,Microsoft Windows 11 Pro 25H2,STANDARD-RMM,5:55 PM,6:27 PM,00:32:38,Success
+Atlanta,2026-09-30,NUC12WSH-B,Microsoft Windows 11 Pro 25H2,STANDARD-RMM,9:06 AM,9:17 AM,00:10:28,SoftwareError
+Atlanta,2026-09-30,NUC12WSH-B,Microsoft Windows 11 Pro 25H2,STANDARD-RMM,9:09 AM,9:20 AM,00:10:57,SoftwareError
+Atlanta,2026-09-30,Latitude 5440,Microsoft Windows 11 Enterprise 25H2,Kforce-STD-ADMIN,8:52 AM,9:22 AM,00:29:12,SoftwareError
