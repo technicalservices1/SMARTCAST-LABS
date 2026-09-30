@@ -3300,3 +3300,8 @@ Chicago,2026-09-30,NUC12WSH-B,Microsoft Windows 11 Pro 25H2,STANDARD-RMM,1:44 PM
 Chicago,2026-09-30,NUC12WSH-B,Microsoft Windows 11 Pro 25H2,STANDARD-RMM,1:45 PM,1:51 PM,00:06:27,Success
 Chicago,2026-09-30,NUC12WSH-B,Microsoft Windows 11 Pro 25H2,STANDARD-RMM,1:46 PM,2:22 PM,00:35:37,Success
 Orlando,2026-09-30,Latitude 5520,Microsoft Windows 11 Pro 25H2,MORGAN-STANLEY-SHOW-V3,3:05 PM,3:24 PM,00:18:17,Success
+Los Angeles,2026-09-30,NUC12WSH-B,Microsoft Windows 11 Pro 25H2,GS_CLAUDE,12:46 PM,12:47 PM,00:01:19,Success
+Los Angeles,2026-09-30,NUC12WSH-B,Microsoft Windows 11 Pro 25H2,GoldmanSachs-2026V1,12:46 PM,12:51 PM,00:04:34,PolicyError
+Los Angeles,2026-09-30,NUC12WSH-B,Microsoft Windows 11 Pro 25H2,GoldmanSachs-2026V1,12:46 PM,12:51 PM,00:04:59,PolicyError
+Los Angeles,2026-09-30,NUC12WSH-B,Microsoft Windows 11 Pro 25H2,GoldmanSachs-2026V1,12:45 PM,12:51 PM,00:05:49,PolicyError
+Los Angeles,2026-09-30,NUC12WSH-B,Microsoft Windows 11 Pro 25H2,GoldmanSachs-2026V1,12:52 PM,12:58 PM,00:05:32,PolicyError
