@@ -140,9 +140,8 @@
   .sumbar .it b{color:var(--txt);font-weight:650;font-size:13.5px}
   .sumbar .it .k{color:var(--blue)}
 
-  .cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px;margin-bottom:14px}
+  .cols{display:grid;grid-template-columns:minmax(0,1fr);gap:20px;margin-bottom:14px}
   .cols>.card{min-width:0;overflow:hidden}
-  @media(max-width:1500px){.cols{grid-template-columns:minmax(0,1fr)}}
   h2.sec{font-size:13px;text-transform:uppercase;letter-spacing:.7px;color:var(--mut);font-weight:700;margin-bottom:10px;display:flex;align-items:center;gap:8px;justify-content:space-between}
   h2.sec .lbl{display:flex;align-items:center;gap:8px}
   h2.sec .cnt{color:var(--mut);font-weight:600;text-transform:none;letter-spacing:0;font-size:11.5px}
@@ -198,13 +197,6 @@
   <div class="filter-note" id="filterNote" style="display:none"></div>
 
   <div class="cols">
-    <div class="card">
-      <h2 class="sec">
-        <span class="lbl"><span class="dot red"></span> Overage Watchlist &mdash; over &amp; approaching allowance</span>
-        <span class="cnt" id="overCnt"></span>
-      </h2>
-      <div class="scrollbox" id="overWrap"></div>
-    </div>
     <div class="card">
       <h2 class="sec">
         <span class="lbl"><span class="dot"></span> All Devices</span>
@@ -280,10 +272,6 @@ const ECODE_MAP = {"KIT4M05413791FK5":"812842","KIT4M05413783PFQ":"812845","KIT4
 
 // Kit serial prefix is the model: KIT4M = Mini, KIT4P = Gen 3 Performance.
 // Verified against the tracker — no serial is ever typed as the other model.
-// A kit is flagged as approaching when it has used WARN_PCT of its allowance, or
-// when its current burn rate projects past the allowance by the end of the cycle.
-// 80% matches the warning threshold the SharePoint Data Calculator already uses.
-const WARN_PCT = 80;
 
 // Kits that appear in the Granite export but are not ours. They are dropped before
 // anything is counted, so they affect no total, no pool figure and no table.
@@ -373,28 +361,12 @@ function compute(data){
   const total = recs.reduce((s,r)=>s+r.usage,0);
   const pool = recs.reduce((s,r)=>s+(r.planGB||0),0);
   const active = recs.filter(r=>r.usage>0).length;
-  // Overage is measured against each kit's contracted monthly allowance, not the
-  // 50 GB pooled plan. A kit with no allowance on file cannot be judged, so it is
-  // left off the watchlist rather than compared against the wrong number.
   const frac = cycleFraction(data);
-  const scored = recs.filter(r=>r.allowance>0).map(r=>({
-      ...r,
-      overBy: r.usage-r.allowance,
-      pct: r.usage/r.allowance*100,
-      projected: r.usage/frac
-  }));
-  // Over = already past allowance. Approaching = at WARN_PCT, or on pace to finish over.
-  const over = scored.filter(r=>r.usage>r.allowance).sort((a,b)=>b.overBy-a.overBy);
-  const nearing = scored.filter(r=>r.usage<=r.allowance &&
-                                   (r.pct>=WARN_PCT || r.projected>r.allowance))
-                        .sort((a,b)=>b.pct-a.pct);
-  const watch = [...over.map(r=>({...r,state:'over'})),
-                 ...nearing.map(r=>({...r,state:'near'}))];
   const top = [...recs].sort((a,b)=>b.usage-a.usage);
   const models={};
   MODELS.forEach(k=>models[k]={n:0,gb:0});
   recs.forEach(r=>{(models[r.model]=models[r.model]||{n:0,gb:0}); models[r.model].n++; models[r.model].gb+=r.usage;});
-  return {recs,total,pool,active,over,watch,frac,top,models};
+  return {recs,total,pool,active,frac,top,models};
 }
 
 let activeStatusFilter = null; // null = no filter, otherwise 'active' or 'idle'
@@ -577,25 +549,7 @@ function render(data){
     (!activeStatusFilter || (activeStatusFilter==='active' ? r.usage>0 : r.usage===0)) &&
     (!activeModelFilter || r.model===activeModelFilter);
 
-  const overFiltered = m.watch.filter(matchesFilters);
   const topFiltered = m.top.filter(matchesFilters);
-
-  const nOver = overFiltered.filter(r=>r.state==='over').length;
-  document.getElementById('overCnt').textContent =
-    nOver+' over \u00b7 '+(overFiltered.length-nOver)+' approaching';
-  const ow=document.getElementById('overWrap');
-  if(!overFiltered.length){ ow.innerHTML='<div class="empty">No kits over or approaching their allowance'+((activeStatusFilter||activeModelFilter)?' match this filter':'')+' this cycle.</div>'; }
-  else{
-    let rows=overFiltered.map(r=>`<tr>
-      <td class="kit">${r.kit}</td>
-      <td class="ecode">${r.ecode||''}</td>
-      <td><span class="pill ${r.model==='Gen 3'?'pg3':'pmini'}">${r.model}</span></td>
-      <td class="num allow">${r.allowance!=null?fmt(r.allowance,0):'\u2014'}</td>
-      <td class="num">${fmt(r.usage,1)}</td>
-      <td class="num ${r.state==='over'?'over':'near'}">${r.pct.toFixed(0)}%</td>
-      <td><span class="pill ${r.state==='over'?'pover':'pnear'}">${r.state==='over'?'Over +'+fmt(r.overBy,1):'Approaching'}</span></td></tr>`).join('');
-    ow.innerHTML=`<table><thead><tr><th>Kit</th><th>ECODE</th><th>Type</th><th>Allowance</th><th>Used</th><th>% Used</th><th>Status</th></tr></thead><tbody>${rows}</tbody></table>`;
-  }
 
   document.getElementById('topCnt').textContent = topFiltered.length+' kits';
   const max=topFiltered[0]?topFiltered[0].usage:1;
@@ -643,12 +597,6 @@ function render(data){
       }).join('')
     : '';
 
-  const nOverP = m.watch.filter(r=>r.state==='over').length;
-  const overRows = m.watch.length
-    ? m.watch.map(r=>'<tr><td>'+r.kit+'</td><td class="r">'
-        +fmt(r.allowance,0)+'</td><td class="r">'+fmt(r.usage,1)+'</td><td class="r">'+r.pct.toFixed(0)+'%</td><td>'
-        +(r.state==='over'?'Over':'Approaching')+'</td></tr>').join('')
-    : '<tr><td colspan="5" class="d">No kits over or approaching their allowance.</td></tr>';
 
   document.getElementById('printSummary').innerHTML = `
     <h2>Starlink Data Consumption &mdash; cycle summary</h2>
@@ -677,8 +625,6 @@ function render(data){
           ${row('Average per active kit', m.active? tb(m.total/m.active):'\u2014')}
           ${row('Highest single kit', m.top[0]? tb(m.top[0].usage):'\u2014')}
           ${row('&nbsp;&nbsp;kit', m.top[0]? m.top[0].kit:'\u2014')}
-          ${row('Over allowance', nOverP+' kits')}
-          ${row('Approaching allowance', (m.watch.length-nOverP)+' kits')}
         </table>
       </div>
     </div>
@@ -691,9 +637,6 @@ function render(data){
     <table class="ptab"><thead><tr><th>Model</th><th class="r">Kits</th><th class="r">Usage</th></tr></thead>
       <tbody>${modelRows}</tbody></table>
 
-    <h3>Overage watchlist</h3>
-    <table class="ptab"><thead><tr><th>Kit</th><th class="r">Allowance</th><th class="r">Used</th><th class="r">%</th><th>Status</th></tr></thead>
-      <tbody>${overRows}</tbody></table>
 
     ${histRows ? `<h3>Total data consumed by billing cycle</h3>
     <table class="ptab"><thead><tr><th>Cycle</th><th class="r">Kits</th><th class="r">Active</th><th class="r">Used (GB)</th><th class="r">Gen 3 (GB)</th><th class="r">Mini (GB)</th><th class="r">Base pool</th><th class="r">Add-ons</th><th class="r">Total pool</th><th class="r">% of pool</th></tr></thead>
