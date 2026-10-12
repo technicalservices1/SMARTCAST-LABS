@@ -4022,3 +4022,15 @@ DC,2026-10-09,Dell Pro 16 PC16250,Microsoft Windows 11 Pro 25H2,Standard-Image,8
 DC,2026-10-09,Latitude 5421,Microsoft Windows 11 Pro 26H2,Standard-Image,5:39 PM,5:45 PM,00:05:16,Success
 Dallas,2026-10-12,HP ProBook 440 G8 Notebook PC,Microsoft Windows 11 Pro 25H2,Veritext,8:35 AM,8:37 AM,00:01:42,Success
 Englewood,2026-10-12,NUC12WSH-B,Microsoft Windows 11 Pro 26H2,STANDARD-RMM,10:04 AM,10:07 AM,00:03:10,Success
+Orlando,2026-10-12,NUC12WSH-B,Microsoft Windows 11 Pro 26H2,MORGAN-STANLEY-ADMIN-V3,10:33 AM,10:41 AM,00:07:56,ActivationError
+Orlando,2026-10-12,NUC12WSH-B,Microsoft Windows 11 Pro 26H2,MORGAN-STANLEY-ADMIN-V3,10:33 AM,10:41 AM,00:08:11,Success
+Orlando,2026-10-12,NUC12WSH-B,Microsoft Windows 11 Pro 26H2,MORGAN-STANLEY-ADMIN-V3,10:34 AM,10:42 AM,00:07:58,Success
+Orlando,2026-10-12,NUC12WSH-B,Microsoft Windows 11 Pro 26H2,MORGAN-STANLEY-ADMIN-V3,10:34 AM,10:42 AM,00:07:55,Success
+Orlando,2026-10-12,Latitude 5520,Microsoft Windows 11 Pro 25H2,MORGAN-STANLEY-ADMIN-V3,10:42 AM,10:50 AM,00:07:45,Success
+Orlando,2026-10-12,Latitude 5520,Microsoft Windows 11 Pro 25H2,MORGAN-STANLEY-ADMIN-V3,10:42 AM,10:50 AM,00:07:43,Success
+Orlando,2026-10-12,Latitude 5520,Microsoft Windows 11 Pro 25H2,MORGAN-STANLEY-ADMIN-V3,10:43 AM,10:51 AM,00:07:56,Success
+Orlando,2026-10-12,Latitude 5520,Microsoft Windows 11 Pro 25H2,MORGAN-STANLEY-ADMIN-V3,10:43 AM,10:51 AM,00:07:58,Success
+Orlando,2026-10-12,Latitude 5520,Microsoft Windows 11 Pro 25H2,MORGAN-STANLEY-ADMIN-V3,10:44 AM,10:52 AM,00:07:57,Success
+Orlando,2026-10-12,Latitude 5520,Microsoft Windows 11 Pro 25H2,MORGAN-STANLEY-ADMIN-V3,10:44 AM,10:52 AM,00:08:19,Success
+Las Vegas,2026-10-12,Precision 3571,Microsoft Windows 11 Pro 26H2,LED-CONTENT-CONTROL,7:45 AM,7:54 AM,00:08:41,Success
+Las Vegas,2026-10-12,Precision 3571,Microsoft Windows 11 Pro 26H2,LED-CONTENT-CONTROL,7:45 AM,7:54 AM,00:08:40,Success
