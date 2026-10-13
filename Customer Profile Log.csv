@@ -4157,3 +4157,8 @@ DC,2026-10-12,HP ProBook 440 G5,Microsoft Windows 11 Pro 26H2,Standard-Image,10:
 DC,2026-10-12,HP ProBook 440 G6,Microsoft Windows 11 Pro 25H2,Default-Profile,9:56 PM,9:59 PM,00:02:45,Success
 Englewood,2026-10-13,Latitude 5520,Microsoft Windows 11 Pro 26H2,Default-Profile,1:17 PM,1:20 PM,00:02:31,Success
 Englewood,2026-10-13,Latitude 5520,Microsoft Windows 11 Pro 26H2,Default-Profile,1:17 PM,1:20 PM,00:02:47,Success
+Orlando,2026-10-13,Dell Pro 14 PC14250,Microsoft Windows 11 Pro 25H2,The-Select-Group-STD-ADMIN,2:32 PM,2:40 PM,00:07:58,Success
+Orlando,2026-10-13,Dell Pro 14 PC14250,Microsoft Windows 11 Pro 25H2,The-Select-Group-STD-ADMIN,2:30 PM,2:40 PM,00:10:13,Success
+Orlando,2026-10-13,Dell Pro 14 PC14250,Microsoft Windows 11 Pro 25H2,The-Select-Group-STD-ADMIN,2:34 PM,2:41 PM,00:07:43,Success
+Orlando,2026-10-13,Surface Pro 7+,Microsoft Windows 11 Pro 26H2,Default-Profile,2:46 PM,2:50 PM,00:04:16,Success
+Orlando,2026-10-13,Dell Pro 14 PC14250,Microsoft Windows 11 Pro 25H2,The-Select-Group-STD-ADMIN,2:32 PM,2:56 PM,00:24:24,PolicyError
