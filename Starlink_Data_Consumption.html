@@ -421,7 +421,7 @@ function render(data){
     heroCard('Estimated Cost', usd(totalCost,0), '', 'amber',
       m.recs.length+' kits &times; '+usd(DEVICE_RATE)
       +(addonGB>0 ? ' + '+fmt(addonGB,0)+' GB add-on &times; '+usd(ADDON_RATE_GB) : '')
-      +' &middot; before tax', null, null,
+      , null, null,
       {subline:'<span>Kits <b>'+usd(kitCost,0)+'</b></span><span>Add-on <b style="color:var(--amber)">'+usd(addonCost,0)+'</b></span>'}),
     heroCard('Active Kits', fmt(m.active), '', 'blue', 'of '+m.recs.length+' provisioned', null, null, {clickable:true, statusName:'active', active:activeStatusFilter==='active'}),
     heroCard('Idle Kits', fmt(idle), '', 'green', '0 GB used this cycle', null, null, {clickable:true, statusName:'idle', active:activeStatusFilter==='idle'}),
@@ -458,7 +458,7 @@ function render(data){
       return new Date(+y, +m-1, 1).toLocaleString(undefined,{month:'short'})+' '+y; };
     hp.style.display='block';
     hp.innerHTML = '<div class="hp-head">Total data consumed by billing cycle'
-      + '<span class="hp-sub">Recorded at the time of each run, from Starlink_Usage_History.xlsx &middot; cost is an estimate, before tax</span></div>'
+      + '<span class="hp-sub">Recorded at the time of each run, from Starlink_Usage_History.xlsx &middot; cost is an estimate</span></div>'
       + (KIT_HISTORY && Object.keys(KIT_HISTORY).length
           ? '<div class="hp-kitprint">Kit usage for <select id="kitCycle">'
             + Object.keys(KIT_HISTORY).sort().reverse().map(c=>'<option value="'+c+'"'
@@ -478,7 +478,7 @@ function render(data){
               +(x.add? '<em> incl '+fmt(x.add/1000,0)+' TB add-on</em>':'')+'</span>'
             + '<span class="hp-pct" style="color:'+col+'">'+(x.pool?pct.toFixed(0)+'%':'')+'</span>'
             + '<span class="hp-kits">'+x.kits+' kits</span>'
-            + '<span class="hp-cost" title="Estimated: kits &times; $114.99 + add-on GB &times; $0.30, before tax">'+usd(cycleCost(x.kits,x.add),0)+'</span></div>';
+            + '<span class="hp-cost" title="Estimated: kits &times; $114.99 + add-on GB &times; $0.30">'+usd(cycleCost(x.kits,x.add),0)+'</span></div>';
         }).join('');
     const ks=document.getElementById('kitCycle'), kb=document.getElementById('kitPrintBtn');
     if(ks){
@@ -634,7 +634,7 @@ function render(data){
                 tb(Math.abs(pool-m.total)), pool-m.total>=0?'':'neg')}
           ${row('Kit charges', m.recs.length+' &times; '+usd(DEVICE_RATE)+' = '+usd(kitCost))}
           ${row('Add-on data (est.)', fmt(addonGB,0)+' GB &times; '+usd(ADDON_RATE_GB)+' = '+usd(addonCost))}
-          ${row('Estimated cost, before tax', usd(totalCost))}
+          ${row('Estimated cost', usd(totalCost))}
         </table>
       </div>
       <div>
@@ -662,7 +662,7 @@ function render(data){
     ${histRows ? `<h3>Total data consumed by billing cycle</h3>
     <table class="ptab"><thead><tr><th>Cycle</th><th class="r">Kits</th><th class="r">Active</th><th class="r">Used GB</th><th class="r">Gen 3</th><th class="r">Mini</th><th class="r">Base</th><th class="r">Add-ons</th><th class="r">Pool</th><th class="r">% used</th><th class="r">Est. cost</th></tr></thead>
       <tbody>${histRows}</tbody></table>
-    <div class="pnote">Recorded at the time of each run. Base pool is kits &times; 50 GB; Est. cost is kits &times; $114.99 plus add-on GB &times; $0.30 (estimated rate), before tax; total pool includes data add-ons purchased in that cycle. Gen 3 and Mini may add up to less than Used where kits dropped from the Granite export after the total was recorded.</div>` : ''}
+    <div class="pnote">Recorded at the time of each run. Base pool is kits &times; 50 GB; Est. cost is kits &times; $114.99 plus add-on GB &times; $0.30 (estimated rate); total pool includes data add-ons purchased in that cycle. Gen 3 and Mini may add up to less than Used where kits dropped from the Granite export after the total was recorded.</div>` : ''}
 
     <h3 class="newpage">All devices &mdash; ${m.recs.length} kits, highest usage first</h3>
     <table class="ptab alldev"><thead><tr><th class="n">#</th><th>Kit</th><th>ECODE</th><th>Type</th><th class="r">Allowance</th><th class="r">Used (GB)</th></tr></thead>
