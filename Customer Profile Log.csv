@@ -4647,3 +4647,61 @@ Orlando,2026-10-23,Latitude 5520,Microsoft Windows 11 Pro 25H2,Default-Profile,1
 Englewood,2026-10-23,Precision 3591,Microsoft Windows 11 Pro 26H2,Default-Profile,2:26 PM,2:40 PM,00:13:57,Success
 Los Angeles,2026-10-23,Latitude 5450,Microsoft Windows 11 Pro 26H2,Rylem-STD-ADMIN,11:28 AM,11:49 AM,00:21:05,Success
 Los Angeles,2026-10-23,Latitude 5450,Microsoft Windows 11 Pro 25H2,Kforce-STD-ADMIN,11:24 AM,11:54 AM,00:30:42,Success
+Atlanta,2026-10-21,Precision 3581,Microsoft Windows 11 Enterprise 26H2,Kforce-STD-ADMIN,2:52 PM,3:27 PM,00:35:26,Success
+Atlanta,2026-10-14,Latitude 5430,Microsoft Windows 11 Pro 25H2,Manpower-STD-ADMIN,2:10 PM,2:45 PM,00:35:33,Success
+Atlanta,2026-10-20,Precision 7560,Microsoft Windows 11 Pro 26H2,STANDARD-RMM,3:00 PM,3:17 PM,00:16:24,Success
+Atlanta,2026-10-12,Latitude 5420,Microsoft Windows 11 Pro 25H2,IG-AT&T-ADMIN,1:36 PM,2:15 PM,00:38:25,SoftwareError
+Atlanta,2026-10-21,Latitude 5430,Microsoft Windows 11 Pro 25H2,Manpower-STD-ADMIN,8:56 AM,9:41 AM,00:45:24,Success
+Atlanta,2026-10-13,Latitude 5520,Microsoft Windows 11 Pro 26H2,STANDARD-RMM,2:52 PM,2:57 PM,00:05:20,SoftwareError
+Atlanta,2026-10-22,Latitude 5440,Microsoft Windows 11 Enterprise 26H2,Kforce-STD-ADMIN,5:15 PM,5:40 PM,00:24:20,Success
+Atlanta,2026-10-14,Latitude 5430,Microsoft Windows 11 Pro 25H2,Manpower-STD-ADMIN,2:09 PM,2:44 PM,00:34:50,Success
+Atlanta,2026-10-20,Precision 7560,Microsoft Windows 11 Pro 26H2,STANDARD-RMM,3:01 PM,3:17 PM,00:16:03,Success
+Atlanta,2026-10-13,Latitude 5520,Microsoft Windows 11 Pro 25H2,STANDARD-RMM,2:52 PM,3:03 PM,00:10:28,SoftwareError
+Atlanta,2026-10-16,Latitude 5440,Microsoft Windows 11 Enterprise 26H2,Kforce-STD-ADMIN,9:26 AM,9:54 AM,00:27:43,Success
+Atlanta,2026-10-13,Latitude 5520,Microsoft Windows 11 Pro 25H2,STANDARD-RMM,2:50 PM,3:00 PM,00:09:53,SoftwareError
+Atlanta,2026-10-13,Latitude 5520,Microsoft Windows 11 Pro 26H2,STANDARD-RMM,2:49 PM,2:56 PM,00:07:22,SoftwareError
+Atlanta,2026-10-13,Latitude 5520,Microsoft Windows 11 Pro 26H2,STANDARD-RMM,2:49 PM,2:56 PM,00:06:46,SoftwareError
+Atlanta,2026-10-12,Precision 7560,Microsoft Windows 11 Pro 25H2,SSR-Employee-Onboarding,12:56 PM,1:27 PM,00:31:14,SoftwareError
+Atlanta,2026-10-12,Precision 3581,Microsoft Windows 11 Pro 25H2,SSR-Employee-Onboarding,11:03 AM,11:38 AM,00:35:23,SoftwareError
+Atlanta,2026-10-20,Latitude 5511,Microsoft Windows 11 Pro 25H2,STANDARD-RMM,11:25 AM,11:50 AM,00:24:57,Success
+Atlanta,2026-10-15,ThinkPad P15 Gen 1,Microsoft Windows 11 Pro 25H2,SSR-Employee-Onboarding,2:07 PM,2:36 PM,00:28:45,Success
+Atlanta,2026-10-13,Latitude 5520,Microsoft Windows 11 Pro 25H2,STANDARD-RMM,2:49 PM,2:55 PM,00:05:40,SoftwareError
+Atlanta,2026-10-14,Latitude 5450,Microsoft Windows 11 Pro 25H2,Beacon-Hill-CHARTER-ADMIN,3:45 PM,4:18 PM,00:32:51,Success
+Atlanta,2026-10-20,Latitude 5520,Microsoft Windows 11 Pro 26H2,STANDARD-RMM,1:51 PM,2:10 PM,00:18:56,Success
+Atlanta,2026-10-13,Latitude 5421,Microsoft Windows 11 Pro 25H2,CRS-STD-ADMIN,10:11 AM,10:37 AM,00:26:23,Success
+Atlanta,2026-10-14,Latitude 5430,Microsoft Windows 11 Pro 25H2,Manpower-STD-ADMIN,2:08 PM,2:39 PM,00:31:13,Success
+Atlanta,2026-10-20,Precision 7560,Microsoft Windows 11 Pro 26H2,STANDARD-RMM,3:01 PM,3:17 PM,00:16:05,Success
+Atlanta,2026-10-20,Latitude 5511,Microsoft Windows 11 Pro 25H2,Default-Profile,1:49 PM,1:56 PM,00:07:10,Success
+Atlanta,2026-10-13,Latitude 5520,Microsoft Windows 11 Pro 26H2,STANDARD-RMM,2:50 PM,2:56 PM,00:06:28,SoftwareError
+Atlanta,2026-10-20,Precision 7560,Microsoft Windows 11 Pro 26H2,STANDARD-RMM,3:00 PM,3:16 PM,00:16:25,Success
+Atlanta,2026-10-21,Latitude 5430,Microsoft Windows 11 Pro 25H2,Manpower-STD-ADMIN,8:54 AM,9:36 AM,00:41:34,Success
+Atlanta,2026-10-20,Precision 7560,Microsoft Windows 11 Pro 26H2,STANDARD-RMM,3:05 PM,3:22 PM,00:17:38,Success
+Atlanta,2026-10-20,Latitude 5520,Microsoft Windows 11 Pro 26H2,STANDARD-RMM,1:51 PM,2:09 PM,00:17:55,Success
+Atlanta,2026-10-20,Precision 7560,Microsoft Windows 11 Pro 26H2,STANDARD-RMM,3:03 PM,3:20 PM,00:16:31,Success
+Atlanta,2026-10-14,Latitude 5430,Microsoft Windows 11 Pro 25H2,Manpower-STD-ADMIN,2:06 PM,2:44 PM,00:37:38,Success
+Atlanta,2026-10-20,Latitude 5520,Microsoft Windows 11 Pro 26H2,STANDARD-RMM,1:52 PM,2:10 PM,00:17:48,Success
+Atlanta,2026-10-20,Precision 7560,Microsoft Windows 11 Pro 26H2,STANDARD-RMM,3:04 PM,3:21 PM,00:16:49,Success
+Atlanta,2026-10-21,Latitude 5430,Microsoft Windows 11 Pro 25H2,Manpower-STD-ADMIN,8:55 AM,9:40 AM,00:44:38,Success
+Atlanta,2026-10-13,Latitude 5520,Microsoft Windows 11 Pro 26H2,STANDARD-RMM,2:51 PM,2:58 PM,00:06:57,SoftwareError
+Atlanta,2026-10-20,Precision 7560,Microsoft Windows 11 Pro 26H2,STANDARD-RMM,3:02 PM,3:17 PM,00:15:18,Success
+Atlanta,2026-10-21,Latitude 5450,Microsoft Windows 11 Pro 25H2,Beacon-Hill-CHARTER-ADMIN,3:33 PM,4:14 PM,00:41:10,Success
+Atlanta,2026-10-20,Latitude 5520,Microsoft Windows 11 Pro 26H2,STANDARD-RMM,1:52 PM,2:10 PM,00:18:03,Success
+Atlanta,2026-10-12,Precision 3581,Microsoft Windows 11 Pro 25H2,SSR-Employee-Onboarding,9:23 AM,9:54 AM,00:30:51,SoftwareError
+Atlanta,2026-10-14,Latitude 5430,Microsoft Windows 11 Pro 25H2,Manpower-STD-ADMIN,2:07 PM,2:41 PM,00:34:14,Success
+Atlanta,2026-10-20,Precision 7560,Microsoft Windows 11 Pro 26H2,STANDARD-RMM,3:03 PM,3:19 PM,00:15:58,Success
+Atlanta,2026-10-12,Latitude 5440,Microsoft Windows 11 Enterprise 26H2,Kforce-STD-ADMIN,11:47 AM,11:56 AM,00:09:28,SoftwareError
+Atlanta,2026-10-13,Latitude 5520,Microsoft Windows 11 Pro 25H2,STANDARD-RMM,2:51 PM,2:59 PM,00:08:37,SoftwareError
+Atlanta,2026-10-20,Precision 7560,Microsoft Windows 11 Pro 26H2,STANDARD-RMM,3:02 PM,3:19 PM,00:16:48,Success
+Atlanta,2026-10-20,Precision 7560,Microsoft Windows 11 Pro 26H2,STANDARD-RMM,3:05 PM,3:28 PM,00:22:53,Success
+Atlanta,2026-10-20,Precision 7560,Microsoft Windows 11 Pro 26H2,STANDARD-RMM,3:04 PM,3:20 PM,00:16:38,Success
+Atlanta,2026-10-21,Latitude 5450,Microsoft Windows 11 Pro 25H2,Manpower-STD-ADMIN,8:51 AM,9:34 AM,00:42:52,Success
+Atlanta,2026-10-20,Latitude 5511,Microsoft Windows 11 Pro 25H2,Default-Profile,1:49 PM,1:56 PM,00:07:15,Success
+Atlanta,2026-10-16,Latitude 5430,Microsoft Windows 11 Pro 26H2,Beacon-Hill-CHARTER-ADMIN,1:05 PM,1:30 PM,00:25:03,Success
+Atlanta,2026-10-14,Latitude 5430,Microsoft Windows 11 Pro 25H2,Manpower-STD-ADMIN,2:11 PM,2:46 PM,00:35:03,Success
+Atlanta,2026-10-13,Latitude 5520,Microsoft Windows 11 Pro 26H2,STANDARD-RMM,2:51 PM,2:58 PM,00:06:47,SoftwareError
+Atlanta,2026-10-20,Latitude 5511,Microsoft Windows 11 Pro 25H2,STANDARD-RMM,11:25 AM,11:51 AM,00:26:48,Success
+Atlanta,2026-10-14,Latitude 5430,Microsoft Windows 11 Pro 25H2,Manpower-STD-ADMIN,1:58 PM,2:38 PM,00:39:37,Success
+Atlanta,2026-10-16,Latitude 5430,Microsoft Windows 11 Pro 26H2,Manpower-STD-ADMIN,9:18 AM,9:47 AM,00:28:56,Success
+Atlanta,2026-10-22,Latitude 5440,Microsoft Windows 11 Enterprise 26H2,Kforce-STD-ADMIN,11:05 AM,11:34 AM,00:28:34,Success
+Los Angeles,2026-10-23,ThinkStation P330 Tiny,Microsoft Windows 11 Pro 25H2,MORGAN-STANLEY-ADMIN-V3,11:27 AM,12:25 PM,00:58:04,Success
+Los Angeles,2026-10-23,ThinkStation P330 Tiny,Microsoft Windows 11 Pro 25H2,MORGAN-STANLEY-ADMIN-V3,11:27 AM,12:27 PM,00:59:46,Success
