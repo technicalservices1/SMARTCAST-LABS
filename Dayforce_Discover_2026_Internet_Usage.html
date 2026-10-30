@@ -86,7 +86,7 @@
       <div class="card kpi">
         <div class="lbl">Unique clients</div>
         <div class="val" id="k-clients"></div>
-        <div class="sub">Connected through SmartSource routers</div>
+        <div class="sub">Connected across the event</div>
       </div>
       <div class="card kpi">
         <div class="lbl">Encore</div>
@@ -170,7 +170,7 @@ const add = (t, b) => { const el = document.createElement(b ? 'b' : 'span'); el.
 add('The control room\u2019s fiber drop (KIT 9) carried '); add(CORE.total_tb.toFixed(2) + ' TB', 1);
 add(' from going live Friday, Oct 23 through the event\u2019s close (live show Mon\u2013Thu, Oct 26\u201329): '); add((hotelGb('Encore') / 1000).toFixed(2) + ' TB', 1);
 add(' at Encore and '); add((hotelGb('Wynn') / 1000).toFixed(2) + ' TB', 1);
-add(' at Wynn, across '); add(d3.format(',')(CORE.clients_total) + ' unique clients', 1); add(' connected through SmartSource routers. The heaviest data room was '); add(topRoom.room, 1); add('.');
+add(' at Wynn, serving '); add(d3.format(',')(CORE.clients_total) + ' unique clients', 1); add('. The heaviest data room was '); add(topRoom.room, 1); add('.');
 
 $('k-total').textContent = CORE.total_tb.toFixed(2) + ' TB';
 $('k-fiber').textContent = 'Fiber drop ' + CORE.fiber_gbps + ' Gbps';
