@@ -5787,3 +5787,7 @@ Los Angeles,2026-11-12,Latitude 5520,Microsoft Windows 11 Pro 26H2,1-Std-SSR,11:
 Los Angeles,2026-11-12,Latitude 5520,Microsoft Windows 11 Pro 26H2,1-Std-SSR,11:30 AM,11:50 AM,00:20:11,Success
 Los Angeles,2026-11-12,Latitude 5520,Microsoft Windows 11 Pro 26H2,1-Std-SSR,11:31 AM,11:51 AM,00:20:07,Success
 Los Angeles,2026-11-12,Latitude 5520,Microsoft Windows 11 Pro 26H2,1-Std-SSR,11:30 AM,11:52 AM,00:21:23,Success
+Hauppauge,2026-11-12,Microsoft Surface Pro 11th Edition,Microsoft Windows 11 Pro 25H2,Default-Profile,2:57 PM,3:54 PM,00:57:11,Success
+Hauppauge,2026-11-12,Microsoft Surface Pro 11th Edition,Microsoft Windows 11 Pro 25H2,Default-Profile,12:16 PM,12:57 PM,00:41:08,PolicyError
+Englewood,2026-11-12,NUC12WSH-B,Microsoft Windows 11 Pro 26H2,STANDARD-RMM,3:51 PM,3:58 PM,00:07:06,Success
+Englewood,2026-11-12,Latitude 5440,Microsoft Windows 11 Pro 26H2,Default-Profile,3:42 PM,3:58 PM,00:16:05,Success
