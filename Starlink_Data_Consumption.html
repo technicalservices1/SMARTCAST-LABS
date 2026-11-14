@@ -89,7 +89,7 @@
   .hp-pool{width:170px;text-align:right;color:var(--mut);font-size:12px}
   .hp-pool em{font-style:normal;color:var(--amber);font-size:11px;display:block}
   .hp-pct{width:52px;text-align:right;font-weight:700}
-  .hp-kits{width:70px;text-align:right;color:var(--mut);font-size:12px}
+  .hp-kits{width:120px;text-align:right;color:var(--mut);font-size:12px}
   .hp-cost{width:84px;text-align:right;color:var(--txt);font-size:12px;font-weight:650}
   .pbtn{margin-left:auto;background:rgba(96,165,250,.12);border:1px solid rgba(96,165,250,.35);
     color:var(--blue);border-radius:8px;padding:5px 14px;font-size:12px;font-weight:650;
@@ -187,6 +187,9 @@
   .pill.pnear{background:rgba(245,158,11,.15);color:var(--amber)}
   .pill.pg3{background:rgba(167,139,250,.16);color:var(--violet)}
   .pill.pmini{background:rgba(52,211,153,.14);color:var(--green)}
+  .pill.sact{background:rgba(52,211,153,.16);color:var(--green)}
+  .pill.spau{background:rgba(248,113,113,.16);color:var(--red)}
+  .pill.sunl{background:rgba(148,163,184,.14);color:var(--mut)}
   .over{color:var(--red);font-weight:700}
   .rank{color:var(--mut);font-weight:700;width:26px}
   .ubar{position:relative;height:20px;background:var(--line);border-radius:5px;overflow:hidden;min-width:90px}
@@ -255,24 +258,24 @@ const DATA_URL = null;   // set to a raw GitHub URL to skip auto-discovery entir
 const REPO = { owner:'technicalservices1', repo:'SMARTCAST-LABS', path:'', branch:'main' };
 
 // File 1 - per-kit usage. Kit, Ecode, Model, Billing Start/End, Plan Amount, Data Usage (GB).
-const DATA_DIR_AUTO = { ...REPO, fileMatch: /^Starlink_Usage_Current_by_Kit.*\.xlsx$/i };
+const DATA_DIR_AUTO = { ...REPO, fileMatch: /^Starlink_Usage_Current_by_Kit.*\.xlsx$/i, fallback:'Starlink_Usage_Current_by_Kit.xlsx', wantTime:true };
 
 // File 3 - mid-cycle data purchases. Its "AddOns" tab lists one row per purchase; a row
 // counts when its Purchased On date falls inside the billing cycle on display. Committed
 // add-ons are visible to everyone rather than only on the machine they were typed into.
-const ADDON_DIR_AUTO = { ...REPO, fileMatch: /^Starlink_Pool_AddOns.*\.xlsx$/i, sheet:'AddOns' };
+const ADDON_DIR_AUTO = { ...REPO, fileMatch: /^Starlink_Pool_AddOns.*\.xlsx$/i, sheet:'AddOns', fallback:'Starlink_Pool_AddOns.xlsx' };
 
 // File 4 - our own month-by-month record, written by the transform script. Granite's
 // export has retroactively changed past cycles, so this file is the authority for
 // anything other than the current cycle.
-const HIST_DIR_AUTO  = { ...REPO, fileMatch: /^Starlink_Usage_History.*\.xlsx$/i, sheet:'History' };
+const HIST_DIR_AUTO  = { ...REPO, fileMatch: /^Starlink_Usage_History.*\.xlsx$/i, sheet:'History', fallback:'Starlink_Usage_History.xlsx' };
 let HISTORY = null;
-const KITHIST_DIR_AUTO = { ...REPO, fileMatch: /^Starlink_Usage_Kit_History.*\.xlsx$/i, sheet:'Kit History' };
+const KITHIST_DIR_AUTO = { ...REPO, fileMatch: /^Starlink_Usage_Kit_History.*\.xlsx$/i, sheet:'Kit History', fallback:'Starlink_Usage_Kit_History.xlsx' };
 let KIT_HISTORY = null;          // { 'YYYY-MM': [{kit,ecode,type,used}] }
 // File 6 - which kits are active, paused or deactivated. Granite's usage report does not
 // show pause status, so this list (eCode, Kit, Type, Status) is kept by hand: Active or Paused.
 // Kits not on it are not counted. When the file is missing every kit counts as active.
-const KITSTATUS_DIR_AUTO = { ...REPO, fileMatch: /^Starlink_Kit_Status.*\.xlsx$/i, sheet:'Status' };
+const KITSTATUS_DIR_AUTO = { ...REPO, fileMatch: /^Starlink_Kit_Status.*\.xlsx$/i, sheet:'Status', fallback:'Starlink_Kit_Status.xlsx' };
 let KIT_STATUS = null;           // { KIT: {ecode,type,status} }
 let kitPrintCycle = null;        // month picked for Print kit usage
 let historyOpen = false;
@@ -287,7 +290,7 @@ const DEVICE_RATE   = 114.99;   // per kit, per month
 const ADDON_RATE_GB = 0.30;     // per GB of add-on data (estimated)
 const PAUSED_RATE   = 19.99;    // per paused kit, per month
 function usd(n,d=2){return '$'+Number(n).toLocaleString(undefined,{minimumFractionDigits:d,maximumFractionDigits:d});}
-function cycleCost(kits,addGB){return (kits||0)*DEVICE_RATE + (addGB||0)*ADDON_RATE_GB;}
+function cycleCost(kits,addGB,paused){return (kits||0)*DEVICE_RATE + (paused||0)*PAUSED_RATE + (addGB||0)*ADDON_RATE_GB;}
 
 function fmt(n,d=0){return Number(n).toLocaleString(undefined,{minimumFractionDigits:d,maximumFractionDigits:d});}
 function tb(gb){return gb>=1000 ? (gb/1000).toFixed(2)+' TB' : fmt(gb,1)+' GB';}
@@ -332,11 +335,15 @@ let addonPanelOpen = false;
 // should report - the age of the data, not the moment the page happened to load.
 // null means we could not reach GitHub and are showing the embedded snapshot.
 let DATA_STAMP = null;
+let LIVE_LOADED = false;          // live usage file read, even if its commit time could not be fetched
+let API_LIMITED = false;          // GitHub API refused a call (usually the hourly limit)
 const STALE_HOURS = 12;          // past this the stamp turns red
 
 function stampHtml(){
   if(DATA_STAMP==null){
-    return '<span class="stamp stale">embedded snapshot &mdash; live data not loaded</span>';
+    return LIVE_LOADED
+      ? '<span class="stamp">live data &middot; update time unavailable (GitHub limit, try again later)</span>'
+      : '<span class="stamp stale">embedded snapshot &mdash; live data not loaded</span>';
   }
   const d=new Date(DATA_STAMP);
   const hrs=(Date.now()-DATA_STAMP)/36e5;
@@ -404,6 +411,8 @@ function render(data){
   const billedKits = ks ? ks.Active.total : m.recs.length;          // kits carrying the 50 GB / $114.99
   const activeRecs = m.recs.filter(r=>statusOf(r.kit)==='Active');
   const idle = activeRecs.filter(r=>r.usage===0).length;           // active kits with no usage yet
+  const activeUsage = activeRecs.reduce((s,r)=>s+r.usage,0);
+  const avgActive = billedKits ? activeUsage/billedKits : 0;        // spread across every active kit
   const cycleKey = data.billingStart;
   // a purchase belongs to the cycle its date falls inside
   const committed = (FILE_ADDONS||[])
@@ -501,8 +510,8 @@ function render(data){
             + '<span class="hp-pool">of '+(x.pool?tb(x.pool):'\u2014')
               +(x.add? '<em> incl '+fmt(x.add/1000,0)+' TB add-on</em>':'')+'</span>'
             + '<span class="hp-pct" style="color:'+col+'">'+(x.pool?pct.toFixed(0)+'%':'')+'</span>'
-            + '<span class="hp-kits">'+x.kits+' kits</span>'
-            + '<span class="hp-cost" title="Estimated: kits &times; $114.99 + add-on GB &times; $0.30">'+usd(cycleCost(x.kits,x.add),0)+'</span></div>';
+            + '<span class="hp-kits">'+x.kits+' kits'+(x.paused?' <em style="color:var(--red);font-style:normal">+'+x.paused+' paused</em>':'')+'</span>'
+            + '<span class="hp-cost" title="Estimated: active kits &times; $114.99 + paused kits &times; $19.99 + add-on GB &times; $0.30">'+usd(cycleCost(x.kits,x.add,x.paused),0)+'</span></div>';
         }).join('');
     const ks=document.getElementById('kitCycle'), kb=document.getElementById('kitPrintBtn');
     if(ks){
@@ -570,7 +579,7 @@ function render(data){
     sb('Kits total', ks ? ks.Active.total+ks.Paused.total : m.recs.length)+
     (notReported.length ? '<div class="it nr" id="nrBtn" title="Kits on our list that Granite\'s report does not show - click for the list">Not in Granite report <b>'+notReported.length+'</b></div>' : '')+
     sb('Data pool', tb(pool))+
-    sb('Avg / active kit', m.active? tb(m.total/m.active):'\u2014')+
+    sb('Avg / active kit', billedKits? tb(avgActive):'\u2014')+
     sb('Peak kit', tb(m.top[0]?m.top[0].usage:0))+
     (HISTORY && HISTORY.length
       ? '<button id="histBtn" class="pbtn'+(historyOpen?' on':'')+'" title="Month-by-month total data consumed">'
@@ -618,10 +627,10 @@ function render(data){
     <td class="kit">${r.kit}</td>
     <td class="ecode">${r.ecode||''}</td>
     <td><span class="pill ${r.model==='Gen 3'?'pg3':'pmini'}">${r.model}</span></td>
-    <td><span class="pill p50">${r.plan}</span></td>
+    <td>${KIT_STATUS ? statusPill(statusOf(r.kit)) : '<span class="pill p50">'+r.plan+'</span>'}</td>
     <td style="width:16%"><div class="ubar"><i style="width:${Math.max(4,r.usage/max*100)}%"></i></div></td>
     <td class="num">${fmt(r.usage,1)}</td></tr>`).join('');
-  document.getElementById('topWrap').innerHTML=`<table><thead><tr><th>#</th><th>Kit</th><th>ECODE</th><th>Type</th><th>Plan</th><th>Usage</th><th>GB</th></tr></thead><tbody>${trows}</tbody></table>`;
+  document.getElementById('topWrap').innerHTML=`<table><thead><tr><th>#</th><th>Kit</th><th>ECODE</th><th>Type</th><th>${KIT_STATUS?'Status':'Plan'}</th><th>Usage</th><th>GB</th></tr></thead><tbody>${trows}</tbody></table>`;
 
   // ---- month-end summary, only visible on paper -------------------------
   const fmtGB = v => fmt(v,0)+' GB';
@@ -634,11 +643,12 @@ function render(data){
 
   const modelRows = MODELS.map(k=>{
       const v=m.models[k]||{n:0,gb:0};
-      return '<tr><td>'+k+'</td><td class="r">'+v.n+' kits</td><td class="r">'+fmtGB(v.gb)+'</td></tr>';
+      const n = ks ? (ks.Active[k]||0)+(ks.Paused[k]||0) : v.n;
+      return '<tr><td>'+k+'</td><td class="r">'+n+' kits'+(ks?' ('+(ks.Active[k]||0)+' active)':'')+'</td><td class="r">'+fmtGB(v.gb)+'</td></tr>';
     }).join('');
 
   const allRows = m.top.map((r,i)=>'<tr><td class="n">'+(i+1)+'</td><td>'+r.kit+'</td><td>'
-      +(r.ecode||'')+'</td><td>'+r.model+'</td><td class="r">'+fmt(r.usage,1)+'</td></tr>').join('');
+      +(r.ecode||'')+'</td><td>'+r.model+'</td>'+(KIT_STATUS?'<td>'+(statusOf(r.kit)==='Unlisted'?'Not on list':statusOf(r.kit))+'</td>':'')+'<td class="r">'+fmt(r.usage,1)+'</td></tr>').join('');
 
   const histRows = (HISTORY && HISTORY.length)
     ? HISTORY.map(x=>{
@@ -646,13 +656,13 @@ function render(data){
         const pct = x.pool? (x.used/x.pool*100).toFixed(0)+'%' : '';
         const [y,mo]=x.cycle.split('-');
         const nm=new Date(+y,+mo-1,1).toLocaleString(undefined,{month:'long'})+' '+y;
-        return '<tr><td>'+nm+(cur?' (current)':'')+'</td><td class="r">'+x.kits
+        return '<tr><td>'+nm+(cur?' (current)':'')+'</td><td class="r">'+x.kits+(x.paused?' +'+x.paused+'p':'')
              +'</td><td class="r">'+x.active+'</td><td class="r">'+fmt(x.used,0)
              +'</td><td class="r">'+(x.gen3!=null?fmt(x.gen3,0):'\u2014')
              +'</td><td class="r">'+(x.mini!=null?fmt(x.mini,0):'\u2014')
              +'</td><td class="r">'+(x.base?fmt(x.base,0):'\u2014')
              +'</td><td class="r">'+(x.add?fmt(x.add,0):'\u2014')
-             +'</td><td class="r">'+(x.pool?fmt(x.pool,0):'\u2014')+'</td><td class="r">'+pct+'</td><td class="r">'+usd(cycleCost(x.kits,x.add),0)+'</td></tr>';
+             +'</td><td class="r">'+(x.pool?fmt(x.pool,0):'\u2014')+'</td><td class="r">'+pct+'</td><td class="r">'+usd(cycleCost(x.kits,x.add,x.paused),0)+'</td></tr>';
       }).join('')
     : '';
 
@@ -685,8 +695,8 @@ function render(data){
           ${row('Active kits', billedKits+(ks?' (Gen 3 '+ks.Active['Gen 3']+', Mini '+ks.Active.Mini+')':''))}
           ${ks ? row('Paused kits', ks.Paused.total+' (Gen 3 '+ks.Paused['Gen 3']+', Mini '+ks.Paused.Mini+')') : ''}
           ${row('Kits in Granite report', m.recs.length)}
-          ${row('Used data this cycle', m.active)}
-          ${row('Average per active kit', m.active? tb(m.total/m.active):'\u2014')}
+          ${row('Active kits that used data', activeRecs.length-idle)}
+          ${row('Average per active kit', billedKits? tb(avgActive):'\u2014')}
           ${row('Highest single kit', m.top[0]? tb(m.top[0].usage):'\u2014')}
           ${row('&nbsp;&nbsp;kit', m.top[0]? m.top[0].kit:'\u2014')}
         </table>
@@ -703,16 +713,17 @@ function render(data){
 
 
     ${histRows ? `<h3>Total data consumed by billing cycle</h3>
-    <table class="ptab"><thead><tr><th>Cycle</th><th class="r">Kits</th><th class="r">Active</th><th class="r">Used GB</th><th class="r">Gen 3</th><th class="r">Mini</th><th class="r">Base</th><th class="r">Add-ons</th><th class="r">Pool</th><th class="r">% used</th><th class="r">Est. cost</th></tr></thead>
+    <table class="ptab"><thead><tr><th>Cycle</th><th class="r">Kits</th><th class="r">In use</th><th class="r">Used GB</th><th class="r">Gen 3</th><th class="r">Mini</th><th class="r">Base</th><th class="r">Add-ons</th><th class="r">Pool</th><th class="r">% used</th><th class="r">Est. cost</th></tr></thead>
       <tbody>${histRows}</tbody></table>
-    <div class="pnote">Recorded at the time of each run. Base pool is kits &times; 50 GB; Est. cost is kits &times; $114.99 plus add-on GB &times; $0.30 (estimated rate); total pool includes data add-ons purchased in that cycle. Gen 3 and Mini may add up to less than Used where kits dropped from the Granite export after the total was recorded.</div>` : ''}
+    <div class="pnote">Recorded at the time of each run. Kits are active kits (+p = paused). Base pool is active kits &times; 50 GB; Est. cost is active kits &times; $114.99 plus paused kits &times; $19.99 plus add-on GB &times; $0.30 (estimated rate); total pool includes data add-ons purchased in that cycle. Gen 3 and Mini may add up to less than Used where kits dropped from the Granite export after the total was recorded.</div>` : ''}
 
-    <h3 class="newpage">All devices &mdash; ${m.recs.length} kits, highest usage first</h3>
-    <table class="ptab alldev"><thead><tr><th class="n">#</th><th>Kit</th><th>ECODE</th><th>Type</th><th class="r">Used (GB)</th></tr></thead>
-      <tbody>${allRows}<tr class="tot"><td></td><td>Total &mdash; ${m.recs.length} kits</td><td></td><td></td><td class="r">${fmt(m.total,1)}</td></tr></tbody></table>`;
+    <h3 class="newpage">All devices in Granite report &mdash; ${m.recs.length} kits, highest usage first</h3>
+    <table class="ptab alldev"><thead><tr><th class="n">#</th><th>Kit</th><th>ECODE</th><th>Type</th>${KIT_STATUS?'<th>Status</th>':''}<th class="r">Used (GB)</th></tr></thead>
+      <tbody>${allRows}<tr class="tot"><td></td><td>Total &mdash; ${m.recs.length} kits</td><td></td><td></td>${KIT_STATUS?'<td></td>':''}<td class="r">${fmt(m.total,1)}</td></tr></tbody></table>`;
 
-  document.getElementById('foot').innerHTML='Total '+tb(m.total)+' of '+tb(pool)+' pool &middot; '+m.recs.length+' kits';
+  document.getElementById('foot').innerHTML='Total '+tb(m.total)+' of '+tb(pool)+' pool &middot; '+(ks ? ks.Active.total+' active &middot; '+ks.Paused.total+' paused' : m.recs.length+' kits');
 }
+function statusPill(st){ const c={Active:'sact',Paused:'spau'}[st]||'sunl'; return '<span class="pill '+c+'">'+(st==='Unlisted'?'Not on list':st)+'</span>'; }
 function gbOrTb(gb){ return gb<1000 ? fmt(gb,0)+' GB' : (gb/1000).toFixed(2)+' TB'; }
 function heroCard(label,val,unit,cls,foot,pct,col,opts){
   const barHtml = (pct!=null) ? `<div class="bar"><i style="width:${pct}%;background:${col}"></i></div>` : '';
@@ -738,21 +749,43 @@ async function lastCommitTime(owner,repo,branch,filePath){
   return dateStr ? new Date(dateStr).getTime() : -Infinity;
 }
 
+// GitHub allows 60 unauthenticated API calls an hour per network. The folder listing
+// is fetched once per page load and shared by every file lookup, and a commit time is
+// only asked for where it matters (the usage file's age, or picking between several
+// matches). If the API is unavailable - usually that hourly limit after a lot of
+// refreshing - each file is read straight from its usual name instead.
+let _listingP = null;
+function repoListing(cfg){
+  if(!_listingP){
+    const api = `https://api.github.com/repos/${cfg.owner}/${cfg.repo}/contents/${cfg.path}?ref=${cfg.branch}`;
+    _listingP = fetch(api,{cache:'no-store'}).then(r=>r.json()).then(l=>{
+      if(!Array.isArray(l)) throw new Error('GitHub API did not return a directory listing'+(l&&l.message?' ('+l.message+')':''));
+      return l;
+    });
+  }
+  return _listingP;
+}
+function rawFile(cfg, name){
+  return { name, path:name, download_url:
+    `https://raw.githubusercontent.com/${cfg.owner}/${cfg.repo}/${cfg.branch}/${encodeURIComponent(name)}?t=${Date.now()}` };
+}
 async function discoverLatestFile(cfg){
-  const {owner,repo,path,branch,fileMatch} = cfg;
-  const api = `https://api.github.com/repos/${owner}/${repo}/contents/${path}?ref=${branch}`;
-  const listing = await (await fetch(api,{cache:'no-store'})).json();
-  if(!Array.isArray(listing)) throw new Error('GitHub API did not return a directory listing');
+  const {owner,repo,branch,fileMatch} = cfg;
+  let listing;
+  try{ listing = await repoListing(cfg); }
+  catch(e){
+    if(cfg.fallback){ console.warn('GitHub listing unavailable, reading '+cfg.fallback+' directly:', e.message); API_LIMITED = true; return rawFile(cfg, cfg.fallback); }
+    throw e;
+  }
   const candidates = listing.filter(f=>f.type==='file' && fileMatch.test(f.name));
   if(!candidates.length) throw new Error('No files in repo matched fileMatch pattern');
-  // always ask GitHub when each candidate was pushed - with one match that gives us
-  // the data's age, with several it also tells us which is newest
+  if(candidates.length===1 && !cfg.wantTime) return candidates[0];
   const withTimes = await Promise.all(candidates.map(async f=>({
-    file:f, t: await lastCommitTime(owner,repo,branch,f.path||f.name)
+    file:f, t: await lastCommitTime(owner,repo,branch,f.path||f.name).catch(()=>-Infinity)
   })));
   withTimes.sort((a,b)=>b.t-a.t);
   const best = withTimes[0];
-  if(isFinite(best.t)) best.file._committed = best.t;
+  if(isFinite(best.t)) best.file._committed = best.t; else API_LIMITED = true;
   return best.file;
 }
 
@@ -793,7 +826,7 @@ function parseHistory(buf, sheetName){
   const i = n=>hdr.indexOf(n);
   const iC=i('cycle'), iK=i('kits'), iA=i('active kits'), iU=i('data used (gb)');
   const iBase=i('base pool (gb)'), iAdd=i('add-ons (gb)'), iTot=i('total pool (gb)');
-  const iG=i('gen 3 used (gb)'), iM=i('mini used (gb)');
+  const iG=i('gen 3 used (gb)'), iM=i('mini used (gb)'), iPa=i('paused kits');
   const iP=i('data pool (gb)');                       // older files used this single column
   if(iC<0||iU<0) throw new Error('History sheet needs Cycle and Data Used (GB) columns');
   const out=[];
@@ -804,7 +837,7 @@ function parseHistory(buf, sheetName){
     const add  = iAdd>=0  ? (parseFloat(r[iAdd])||0)  : 0;
     const tot  = iTot>=0 && parseFloat(r[iTot]) ? parseFloat(r[iTot]) : base+add;
     const num = j=>{ if(j<0) return null; const v=parseFloat(r[j]); return isNaN(v)?null:v; };
-    out.push({ cycle:c, kits:+r[iK]||0, active:+r[iA]||0,
+    out.push({ cycle:c, kits:+r[iK]||0, active:+r[iA]||0, paused:num(iPa)||0,
                used:parseFloat(r[iU])||0, gen3:num(iG), mini:num(iM), base, add, pool:tot });
   }
   return out.sort((a,b)=>a.cycle<b.cycle?-1:1);
@@ -958,8 +991,9 @@ async function boot(){
       console.log('Auto-discovered latest usage file:', latest.name,
                   DATA_STAMP ? '(committed '+new Date(DATA_STAMP).toLocaleString()+')' : '');
     }
-    if(url.toLowerCase().endsWith('.xlsx')){
+    if(url.toLowerCase().split('?')[0].endsWith('.xlsx')){
       const buf=await (await fetch(url,{cache:'no-store'})).arrayBuffer();
+      LIVE_LOADED = true;
       render(parseXlsx(buf));
     }else{
       const txt=await (await fetch(url,{cache:'no-store'})).text();
