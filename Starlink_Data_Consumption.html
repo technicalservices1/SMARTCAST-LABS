@@ -444,7 +444,7 @@ function render(data){
       {clickable:true, statusName:'active', active:activeStatusFilter==='active', tone:'st-active',
        subline: ks ? '<span>Gen 3 <b>'+ks.Active['Gen 3']+'</b></span><span>Mini <b>'+ks.Active.Mini+'</b></span>' : ''}),
     heroCard('<span class="stpause"></span>Paused Kits', ks ? fmt(ks.Paused.total) : '\u2014', '', 'red',
-      ks ? 'not in pool &middot; '+usd(PAUSED_RATE)+' each = '+usd(pausedCost,0)+'/mo' : 'kit status file not loaded', null, null,
+      ks ? 'no data &middot; '+usd(PAUSED_RATE)+' each = '+usd(pausedCost,0)+'/mo' : 'kit status file not loaded', null, null,
       {clickable:!!ks, statusName:'paused', active:activeStatusFilter==='paused', tone:'st-paused',
        subline: ks ? '<span>Gen 3 <b>'+ks.Paused['Gen 3']+'</b></span><span>Mini <b>'+ks.Paused.Mini+'</b></span>' : ''}),
     heroCard('Gen 3 Performance', fmt(ks ? ks.Active['Gen 3']+ks.Paused['Gen 3'] : m.models['Gen 3'].n), 'kits', 'violet', fmt(m.models['Gen 3'].gb,0)+' GB this cycle', null, null, {clickable:true, modelName:'Gen 3', active:activeModelFilter==='Gen 3',
