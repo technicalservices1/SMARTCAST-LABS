@@ -23,8 +23,8 @@
   .meta .stamp{color:var(--amber);font-weight:600}
   .meta .stamp.stale{color:var(--red)}
 
-  .hero{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:14px;margin-bottom:12px}
-  @media(max-width:1400px){.hero{grid-template-columns:repeat(4,1fr)}}
+  .hero{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:14px;margin-bottom:12px}
+  @media(max-width:1400px){.hero{grid-template-columns:repeat(3,1fr)}}
   @media(max-width:640px){.hero{grid-template-columns:repeat(2,1fr)}}
   .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 18px}
   .metric .subline{display:flex;justify-content:space-between;align-items:baseline;gap:10px;
@@ -41,6 +41,16 @@
   .card.metric.clickable{cursor:pointer;transition:border-color .15s,background .15s}
   .card.metric.clickable:hover{border-color:var(--amber);background:var(--panel2)}
   .card.metric.clickable.active-filter{border-color:var(--amber);background:rgba(245,158,11,.06)}
+  /* status tiles: green = active (on), red = paused (off) */
+  .card.metric.st-active{border-color:rgba(52,211,153,.55);background:linear-gradient(180deg,rgba(52,211,153,.10),rgba(52,211,153,.02))}
+  .card.metric.st-paused{border-color:rgba(248,113,113,.55);background:linear-gradient(180deg,rgba(248,113,113,.10),rgba(248,113,113,.02))}
+  .card.metric.st-active .label{color:var(--green)} .card.metric.st-paused .label{color:var(--red)}
+  .card.metric.st-active .subline b{color:var(--green)} .card.metric.st-paused .subline b{color:var(--red)}
+  .card.metric.st-active.clickable:hover,.card.metric.st-active.active-filter{border-color:var(--green);background:rgba(52,211,153,.14)}
+  .card.metric.st-paused.clickable:hover,.card.metric.st-paused.active-filter{border-color:var(--red);background:rgba(248,113,113,.14)}
+  .stdot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:7px;vertical-align:1px}
+  .stdot.on{background:var(--green);box-shadow:0 0 0 3px rgba(52,211,153,.2)}
+  .stpause{display:inline-block;margin-right:7px;vertical-align:-1px;width:8px;height:9px;border-left:3px solid var(--red);border-right:3px solid var(--red);box-sizing:border-box}
   .filter-note{display:flex;align-items:center;gap:10px;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.25);border-radius:10px;padding:9px 16px;margin-bottom:14px;font-size:12.5px;color:#f6d38a}
   .filter-note button{margin-left:auto;background:none;border:1px solid rgba(245,158,11,.4);color:#f6d38a;border-radius:6px;padding:3px 10px;font-size:11.5px;cursor:pointer;font-weight:600}
   .filter-note button:hover{background:rgba(245,158,11,.15)}
@@ -266,6 +276,7 @@ const PLAN_LIMITS = {"50 GB":50};   // every kit pools at 50 GB regardless of wh
 // a rate Granite has quoted - so every cost shown is labelled an estimate. Tax not included.
 const DEVICE_RATE   = 114.99;   // per kit, per month
 const ADDON_RATE_GB = 0.30;     // per GB of add-on data (estimated)
+const PAUSED_RATE   = 19.99;    // per paused kit, per month
 function usd(n,d=2){return '$'+Number(n).toLocaleString(undefined,{minimumFractionDigits:d,maximumFractionDigits:d});}
 function cycleCost(kits,addGB){return (kits||0)*DEVICE_RATE + (addGB||0)*ADDON_RATE_GB;}
 
@@ -398,7 +409,9 @@ function render(data){
   const poolCol = poolPct>100 ? 'var(--red)' : 'var(--green)';
   const kitCost   = billedKits * DEVICE_RATE;
   const addonCost = addonGB * ADDON_RATE_GB;
-  const totalCost = kitCost + addonCost;
+  const pausedKits = ks ? ks.Paused.total : 0;
+  const pausedCost = pausedKits * PAUSED_RATE;
+  const totalCost = kitCost + pausedCost + addonCost;
 
   document.getElementById('hero').innerHTML = [
     heroCard('Data Usage', (m.total/1000).toFixed(2), 'of '+(pool/1000).toFixed(2)+' TB', 'amber',
@@ -410,19 +423,21 @@ function render(data){
         subline:'<span>Used <b style="color:var(--amber);white-space:nowrap">'+gbOrTb(m.total)+'</b></span><span>'+(pool-m.total>=0?'Left':'Over')+' <b style="white-space:nowrap;color:'+(pool-m.total>=0?'var(--green)':'var(--red)')+'">'
                 +gbOrTb(Math.abs(pool-m.total))+'</b></span>'}),
     heroCard('Estimated Cost', usd(totalCost,0), '', 'amber',
-      billedKits+' kits &times; '+usd(DEVICE_RATE)
-      +(addonGB>0 ? ' + '+fmt(addonGB,0)+' GB add-on &times; '+usd(ADDON_RATE_GB) : '')
+      billedKits+' &times; '+usd(DEVICE_RATE)
+      +(pausedKits ? ' + '+pausedKits+' &times; '+usd(PAUSED_RATE) : '')
+      +(addonGB>0 ? ' + add-on '+usd(addonCost,0) : '')
       , null, null,
-      {subline:'<span>Kits <b>'+usd(kitCost,0)+'</b></span><span>Add-on <b style="color:var(--amber)">'+usd(addonCost,0)+'</b></span>'}),
-    heroCard('Active Kits', fmt(billedKits), '', 'blue',
+      {subline:'<span>Active <b style="color:var(--green)">'+usd(kitCost,0)+'</b></span>'
+              +(pausedKits ? '<span>Paused <b style="color:var(--red)">'+usd(pausedCost,0)+'</b></span>' : '')
+              +((addonGB>0 || !pausedKits) ? '<span>Add-on <b style="color:var(--amber)">'+usd(addonCost,0)+'</b></span>' : '')}),
+    heroCard('<span class="stdot on"></span>Active Kits', fmt(billedKits), '', 'green',
       ks ? fmt(activeRecs.length-idle)+' used data this cycle' : 'of '+m.recs.length+' provisioned', null, null,
-      {clickable:true, statusName:'active', active:activeStatusFilter==='active',
+      {clickable:true, statusName:'active', active:activeStatusFilter==='active', tone:'st-active',
        subline: ks ? '<span>Gen 3 <b>'+ks.Active['Gen 3']+'</b></span><span>Mini <b>'+ks.Active.Mini+'</b></span>' : ''}),
-    heroCard('Paused Kits', ks ? fmt(ks.Paused.total) : '\u2014', '', 'violet',
-      ks ? 'not counted in pool or cost' : 'kit status file not loaded', null, null,
-      {clickable:!!ks, statusName:'paused', active:activeStatusFilter==='paused',
+    heroCard('<span class="stpause"></span>Paused Kits', ks ? fmt(ks.Paused.total) : '\u2014', '', 'red',
+      ks ? 'not in pool &middot; '+usd(PAUSED_RATE)+' each = '+usd(pausedCost,0)+'/mo' : 'kit status file not loaded', null, null,
+      {clickable:!!ks, statusName:'paused', active:activeStatusFilter==='paused', tone:'st-paused',
        subline: ks ? '<span>Gen 3 <b>'+ks.Paused['Gen 3']+'</b></span><span>Mini <b>'+ks.Paused.Mini+'</b></span>' : ''}),
-    heroCard('Idle Kits', fmt(idle), '', 'green', 'active kits with 0 GB this cycle', null, null, {clickable:true, statusName:'idle', active:activeStatusFilter==='idle'}),
     heroCard('Gen 3 Performance', fmt(m.models['Gen 3'].n), 'kits', 'violet', fmt(m.models['Gen 3'].gb,0)+' GB this cycle', null, null, {clickable:true, modelName:'Gen 3', active:activeModelFilter==='Gen 3'}),
     heroCard('Mini', fmt(m.models['Mini'].n), 'kits', 'blue', fmt(m.models['Mini'].gb,0)+' GB this cycle', null, null, {clickable:true, modelName:'Mini', active:activeModelFilter==='Mini'})
   ].join('');
@@ -632,6 +647,7 @@ function render(data){
           ${row(pool-m.total>=0?'Remaining':'Over pool by',
                 tb(Math.abs(pool-m.total)), pool-m.total>=0?'':'neg')}
           ${row('Kit charges', billedKits+' active &times; '+usd(DEVICE_RATE)+' = '+usd(kitCost))}
+          ${pausedKits ? row('Paused kit charges', pausedKits+' paused &times; '+usd(PAUSED_RATE)+' = '+usd(pausedCost)) : ''}
           ${row('Add-on data (est.)', fmt(addonGB,0)+' GB &times; '+usd(ADDON_RATE_GB)+' = '+usd(addonCost))}
           ${row('Estimated cost', usd(totalCost))}
         </table>
@@ -643,7 +659,6 @@ function render(data){
           ${ks ? row('Paused kits', ks.Paused.total+' (Gen 3 '+ks.Paused['Gen 3']+', Mini '+ks.Paused.Mini+')') : ''}
           ${row('Kits in Granite report', m.recs.length)}
           ${row('Used data this cycle', m.active)}
-          ${row('Active kits idle this cycle', idle)}
           ${row('Average per active kit', m.active? tb(m.total/m.active):'\u2014')}
           ${row('Highest single kit', m.top[0]? tb(m.top[0].usage):'\u2014')}
           ${row('&nbsp;&nbsp;kit', m.top[0]? m.top[0].kit:'\u2014')}
@@ -675,7 +690,7 @@ function gbOrTb(gb){ return gb<1000 ? fmt(gb,0)+' GB' : (gb/1000).toFixed(2)+' T
 function heroCard(label,val,unit,cls,foot,pct,col,opts){
   const barHtml = (pct!=null) ? `<div class="bar"><i style="width:${pct}%;background:${col}"></i></div>` : '';
   const o = opts||{};
-  const extraClass = o.clickable ? ' clickable'+(o.active?' active-filter':'') : '';
+  const extraClass = (o.clickable ? ' clickable'+(o.active?' active-filter':'') : '') + (o.tone ? ' '+o.tone : '');
   let dataAttr = '';
   if(o.clickable && o.statusName!=null) dataAttr += ` data-status="${o.statusName}"`;
   if(o.clickable && o.modelName!=null) dataAttr += ` data-model="${o.modelName}"`;
